@@ -84,3 +84,97 @@
 	outline: 1px solid var(--vscode-focusBorder);
 	outline-offset: -1px;
 }
+
+/* "Agent Grid Mode" titlebar toggle — icon-only at rest, expands on hover/focus. */
+.monaco-workbench .agent-grid-mode-titlebar-widget {
+	display: inline-flex;
+	align-items: center;
+	height: 22px;
+	padding: 0 4px;
+	border-radius: 5px;
+	cursor: pointer;
+	color: var(--vscode-titleBar-activeForeground);
+	-webkit-app-region: no-drag;
+	white-space: nowrap;
+}
+
+.monaco-workbench .agent-grid-mode-titlebar-widget > .agent-grid-mode-titlebar-widget-icon {
+	width: 16px;
+	height: 16px;
+	flex: 0 0 auto;
+	background-color: currentColor;
+	-webkit-mask-image: url('./agentGridMode.svg');
+	mask-image: url('./agentGridMode.svg');
+	-webkit-mask-repeat: no-repeat;
+	mask-repeat: no-repeat;
+	-webkit-mask-position: center center;
+	mask-position: center center;
+	-webkit-mask-size: contain;
+	mask-size: contain;
+}
+
+.monaco-enable-motion .monaco-workbench .agent-grid-mode-titlebar-widget > .agent-grid-mode-titlebar-widget-icon,
+.monaco-workbench.monaco-enable-motion .agent-grid-mode-titlebar-widget > .agent-grid-mode-titlebar-widget-icon {
+	transition: opacity 160ms ease;
+}
+
+.monaco-reduce-motion .monaco-workbench .agent-grid-mode-titlebar-widget > .agent-grid-mode-titlebar-widget-icon,
+.monaco-workbench.monaco-reduce-motion .agent-grid-mode-titlebar-widget > .agent-grid-mode-titlebar-widget-icon {
+	transition-duration: 0ms !important;
+}
+
+.monaco-workbench .agent-grid-mode-titlebar-widget > .agent-grid-mode-titlebar-widget-icon {
+	opacity: 0.8;
+}
+
+.monaco-workbench .agent-grid-mode-titlebar-widget:hover > .agent-grid-mode-titlebar-widget-icon,
+.monaco-workbench .agent-grid-mode-titlebar-widget:focus-visible > .agent-grid-mode-titlebar-widget-icon,
+.monaco-workbench .agent-grid-mode-titlebar-widget.checked > .agent-grid-mode-titlebar-widget-icon {
+	opacity: 1;
+}
+
+.monaco-workbench .agent-grid-mode-titlebar-widget > .agent-grid-mode-titlebar-widget-label {
+	display: inline-block;
+	max-width: 0;
+	opacity: 0;
+	margin-left: 0;
+	color: var(--vscode-foreground);
+	font: inherit;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+.monaco-enable-motion .monaco-workbench .agent-grid-mode-titlebar-widget > .agent-grid-mode-titlebar-widget-label,
+.monaco-workbench.monaco-enable-motion .agent-grid-mode-titlebar-widget > .agent-grid-mode-titlebar-widget-label {
+	transition: max-width 160ms ease, opacity 160ms ease, margin-left 160ms ease;
+	transition-delay: 200ms;
+}
+
+.monaco-workbench .agent-grid-mode-titlebar-widget:hover,
+.monaco-workbench .agent-grid-mode-titlebar-widget:focus-visible {
+	background-color: var(--vscode-toolbar-hoverBackground);
+	outline: none;
+}
+
+.monaco-workbench .agent-grid-mode-titlebar-widget.checked {
+	background-color: var(--vscode-toolbar-activeBackground, var(--vscode-toolbar-hoverBackground));
+}
+
+.monaco-workbench .agent-grid-mode-titlebar-widget:hover > .agent-grid-mode-titlebar-widget-label,
+.monaco-workbench .agent-grid-mode-titlebar-widget:focus-visible > .agent-grid-mode-titlebar-widget-label {
+	max-width: 200px;
+	opacity: 1;
+	margin-left: 6px;
+}
+
+.monaco-enable-motion .monaco-workbench .agent-grid-mode-titlebar-widget:hover > .agent-grid-mode-titlebar-widget-label,
+.monaco-enable-motion .monaco-workbench .agent-grid-mode-titlebar-widget:focus-visible > .agent-grid-mode-titlebar-widget-label,
+.monaco-workbench.monaco-enable-motion .agent-grid-mode-titlebar-widget:hover > .agent-grid-mode-titlebar-widget-label,
+.monaco-workbench.monaco-enable-motion .agent-grid-mode-titlebar-widget:focus-visible > .agent-grid-mode-titlebar-widget-label {
+	transition-delay: 0ms;
+}
+
+.monaco-workbench .agent-grid-mode-titlebar-widget:focus-visible {
+	outline: 1px solid var(--vscode-focusBorder);
+	outline-offset: -1px;
+}

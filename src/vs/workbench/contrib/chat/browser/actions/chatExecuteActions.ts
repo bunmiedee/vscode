@@ -437,7 +437,7 @@ export class OpenPermissionPickerAction extends Action2 {
 			category: CHAT_CATEGORY,
 			f1: false,
 			precondition: ChatContextKeys.enabled,
-			menu: {
+			menu: [{
 				id: MenuId.ChatInputSecondary,
 				order: 1,
 				group: 'navigation',
@@ -453,7 +453,27 @@ export class OpenPermissionPickerAction extends Action2 {
 							ChatContextKeys.lockedCodingAgentId.isEqualTo(AgentSessionProviders.Background),
 						),
 					)
-			}
+			}, {
+				// Swarm composer: the shield (permission picker) moves into the
+				// execute toolbar, just before the mic button, and the secondary
+				// row is removed.
+				id: MenuId.ChatExecute,
+				order: -11.5,
+				group: 'navigation',
+				when:
+					ContextKeyExpr.and(
+						ChatContextKeys.enabled,
+						ChatContextKeys.swarmComposer,
+						ChatContextKeys.location.isEqualTo(ChatAgentLocation.Chat),
+						ChatContextKeys.chatModeKind.notEqualsTo(ChatModeKind.Ask),
+						ChatContextKeys.inQuickChat.negate(),
+						ChatContextKeys.inAutomationsDialog.negate(),
+						ContextKeyExpr.or(
+							ChatContextKeys.lockedToCodingAgent.negate(),
+							ChatContextKeys.lockedCodingAgentId.isEqualTo(AgentSessionProviders.Background),
+						),
+					)
+			}]
 		});
 	}
 
@@ -464,6 +484,39 @@ export class OpenPermissionPickerAction extends Action2 {
 			widget.input.openPermissionPicker();
 		}
 	}
+}
+
+export class OpenPairPickerAction extends Action2 {
+	static readonly ID = 'workbench.action.chat.openPairPicker';
+
+	constructor() {
+		super({
+			id: OpenPairPickerAction.ID,
+			title: localize2('interactive.openPairPicker.label', "Open Pair Picker"),
+			tooltip: localize('pairPicker.tooltip', "Pair"),
+			category: CHAT_CATEGORY,
+			f1: false,
+			precondition: ChatContextKeys.enabled,
+			menu: {
+				// Swarm composer only: the Pair control lives in the execute
+				// toolbar, just before the mic button.
+				id: MenuId.ChatExecute,
+				order: -12,
+				group: 'navigation',
+				when:
+					ContextKeyExpr.and(
+						ChatContextKeys.enabled,
+						ChatContextKeys.swarmComposer,
+						ChatContextKeys.location.isEqualTo(ChatAgentLocation.Chat),
+						ChatContextKeys.chatModeKind.notEqualsTo(ChatModeKind.Ask),
+						ChatContextKeys.inQuickChat.negate(),
+						ChatContextKeys.inAutomationsDialog.negate(),
+					)
+			}
+		});
+	}
+
+	override async run(): Promise<void> { /* the action view item handles interaction */ }
 }
 
 export class OpenModePickerAction extends Action2 {
@@ -1206,6 +1259,7 @@ export function registerChatExecuteActions(): DisposableStore {
 	store.add(registerAction2(SwitchToNextPinnedModelAction));
 	store.add(registerAction2(OpenModelPickerAction));
 	store.add(registerAction2(OpenPermissionPickerAction));
+	store.add(registerAction2(OpenPairPickerAction));
 	store.add(registerAction2(OpenModePickerAction));
 	store.add(registerAction2(OpenSessionTargetPickerAction));
 	store.add(registerAction2(OpenDelegationPickerAction));

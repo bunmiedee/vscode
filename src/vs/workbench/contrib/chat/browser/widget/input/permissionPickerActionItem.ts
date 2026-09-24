@@ -345,6 +345,11 @@ export class PermissionPickerActionItem extends ChatInputPickerActionViewItem {
 		}));
 	}
 
+	override render(container: HTMLElement): void {
+		super.render(container);
+		container.classList.add('chat-permission-picker-item');
+	}
+
 	private isSandboxingEnabled(): boolean {
 		if (this.delegate.getSandboxToggle) {
 			return this.delegate.getSandboxToggle()?.checked ?? false;

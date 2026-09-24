@@ -39,7 +39,7 @@ import { IChatViewTitleActionContext } from '../../common/actions/chatActions.js
 import { getChatSessionType, isUntitledChatSession } from '../../common/model/chatUri.js';
 import { IChatModel } from '../../common/model/chatModel.js';
 import { ChatInputNotificationActionKind, ChatInputNotificationSeverity, IChatInputNotificationService } from '../../browser/widget/input/chatInputNotificationService.js';
-import { OPEN_WORKSPACE_IN_AGENTS_WINDOW_COMMAND_ID, OPEN_AGENTS_WINDOW_PRECONDITION, OPEN_AGENTS_WINDOW_COMMAND_ID, ChatAgentLocation, ChatConfiguration, DEFAULT_AGENTS_HANDOFF_TIP_DELAY_SECONDS } from '../../common/constants.js';
+import { OPEN_WORKSPACE_IN_AGENTS_WINDOW_COMMAND_ID, OPEN_AGENTS_WINDOW_PRECONDITION, OPEN_AGENTS_WINDOW_COMMAND_ID, TOGGLE_AGENT_GRID_MODE_COMMAND_ID, ChatAgentLocation, ChatConfiguration, DEFAULT_AGENTS_HANDOFF_TIP_DELAY_SECONDS } from '../../common/constants.js';
 import { CommandsRegistry, ICommandService } from '../../../../../platform/commands/common/commands.js';
 import { ITelemetryService } from '../../../../../platform/telemetry/common/telemetry.js';
 import { ConfigurationTarget, IConfigurationService } from '../../../../../platform/configuration/common/configuration.js';
@@ -396,6 +396,96 @@ export class OpenWorkspaceInAgentsContribution extends Disposable implements IWo
 		super();
 		this._register(actionViewItemService.register(MenuId.TitleBarAdjacentCenter, OPEN_WORKSPACE_IN_AGENTS_WINDOW_TITLE_BAR_COMMAND_ID, (action, options) => {
 			return instantiationService.createInstance(OpenWorkspaceInAgentsTitleBarWidget, action, options);
+		}, undefined));
+	}
+}
+
+/**
+ * Toggles the agent grid mode from the title bar. This is the first step of
+ * porting the `coding-agent-grid-ui` prototype into the workbench: it only
+ * flips a persisted boolean so the toggle affordance and its state can be
+ * validated before the grid surface itself is wired up.
+ */
+export class ToggleAgentGridModeAction extends Action2 {
+
+	constructor() {
+		super({
+			id: TOGGLE_AGENT_GRID_MODE_COMMAND_ID,
+			title: localize2('toggleAgentGridMode', "Toggle Agent Grid Mode"),
+			category: CHAT_CATEGORY,
+			f1: true,
+			toggled: ContextKeyExpr.equals(`config.${ChatConfiguration.TitleBarAgentGridModeEnabled}`, true),
+			menu: {
+				id: MenuId.TitleBarAdjacentCenter,
+				order: -999,
+			},
+		});
+	}
+
+	async run(accessor: ServicesAccessor): Promise<void> {
+		const configurationService = accessor.get(IConfigurationService);
+		const enabled = configurationService.getValue<boolean>(ChatConfiguration.TitleBarAgentGridModeEnabled) === true;
+		await configurationService.updateValue(ChatConfiguration.TitleBarAgentGridModeEnabled, !enabled, ConfigurationTarget.USER);
+	}
+}
+
+/**
+ * Renders the agent grid mode toggle as an icon-only titlebar button that
+ * expands to reveal a label on hover / keyboard focus, mirroring the
+ * "Open in Agents" widget next to it.
+ */
+class ToggleAgentGridModeTitleBarWidget extends BaseActionViewItem {
+
+	constructor(
+		action: IAction,
+		options: IBaseActionViewItemOptions | undefined,
+		@IHoverService private readonly hoverService: IHoverService,
+	) {
+		super(undefined, action, options);
+	}
+
+	override render(container: HTMLElement): void {
+		super.render(container);
+
+		container.classList.add('agent-grid-mode-titlebar-widget');
+		container.setAttribute('role', 'button');
+
+		const label = this.action.label;
+		const hoverText = localize('toggleAgentGridModeHover', "Toggle Agent Grid Mode");
+		container.setAttribute('aria-label', hoverText);
+		this._register(this.hoverService.setupManagedHover(getDefaultHoverDelegate('element'), container, hoverText));
+
+		const icon = append(container, $('span.agent-grid-mode-titlebar-widget-icon'));
+		icon.setAttribute('aria-hidden', 'true');
+
+		const labelEl = append(container, $('span.agent-grid-mode-titlebar-widget-label'));
+		labelEl.textContent = label;
+
+		this.updateChecked();
+	}
+
+	protected override updateChecked(): void {
+		const container = this.element;
+		if (!container) {
+			return;
+		}
+		const checked = this.action.checked === true;
+		container.classList.toggle('checked', checked);
+		container.setAttribute('aria-pressed', String(checked));
+	}
+}
+
+export class ToggleAgentGridModeContribution extends Disposable implements IWorkbenchContribution {
+
+	static readonly ID = 'workbench.contrib.toggleAgentGridMode.desktop';
+
+	constructor(
+		@IActionViewItemService actionViewItemService: IActionViewItemService,
+		@IInstantiationService instantiationService: IInstantiationService,
+	) {
+		super();
+		this._register(actionViewItemService.register(MenuId.TitleBarAdjacentCenter, TOGGLE_AGENT_GRID_MODE_COMMAND_ID, (action, options) => {
+			return instantiationService.createInstance(ToggleAgentGridModeTitleBarWidget, action, options);
 		}, undefined));
 	}
 }

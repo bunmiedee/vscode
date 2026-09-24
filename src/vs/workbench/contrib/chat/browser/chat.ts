@@ -342,6 +342,14 @@ export interface IChatWidgetViewOptions {
 	 */
 	isSessionsWindow?: boolean;
 
+	/**
+	 * Whether the widget is rendered inside the swarm agent grid.
+	 * When true, the composer is restructured: the secondary toolbar row is
+	 * removed and the permission picker plus the Pair picker move into the
+	 * textfield toolbar.
+	 */
+	swarmComposer?: boolean;
+
 	/** Tab index for the transcript tree root. Use `-1` to exclude it from sequential keyboard navigation while preserving programmatic focus. */
 	transcriptTabIndex?: 0 | -1;
 

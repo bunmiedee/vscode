@@ -1,0 +1,836 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* The swarm application fills the editor area handed to it by the workbench
+ * outlet. The workbench shell stays responsible for the title bar, activity
+ * bar, and status bar. */
+.swarm-app {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	background-color: var(--vscode-editor-background);
+	color: var(--vscode-editor-foreground);
+}
+
+.swarm-app .swarm-agent-grid {
+	display: grid;
+	flex: 1 1 auto;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	grid-template-rows: repeat(2, minmax(0, 1fr));
+	gap: var(--vscode-spacing-size120);
+	min-width: 0;
+	min-height: 0;
+	padding: var(--vscode-spacing-size160);
+	overflow: hidden;
+}
+
+.swarm-app .swarm-agent-grid-cell {
+	display: flex;
+	min-width: 0;
+	min-height: 0;
+	border: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	border-radius: var(--vscode-cornerRadius-large);
+	background: var(--vscode-sideBar-background);
+	overflow: hidden;
+}
+
+.swarm-app .swarm-chat-viewpane {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	background: var(--vscode-sideBar-background);
+	color: var(--vscode-sideBar-foreground);
+}
+
+.swarm-app .swarm-chat-window-header {
+	display: flex;
+	flex-direction: column;
+	flex: none;
+	gap: var(--vscode-spacing-size60);
+	padding: var(--vscode-spacing-size80) var(--vscode-spacing-size100) var(--vscode-spacing-size60);
+	border-bottom: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	background: color-mix(in srgb, var(--vscode-sideBar-background) 94%, var(--vscode-editor-background));
+}
+
+.swarm-app .swarm-chat-window-titleRow,
+.swarm-app .swarm-chat-window-contextRow {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size80);
+	min-width: 0;
+	flex-wrap: nowrap;
+}
+
+.swarm-app .swarm-chat-window-titleRow {
+	justify-content: space-between;
+}
+
+.swarm-app .swarm-chat-window-titleGroup,
+.swarm-app .swarm-chat-window-contextGroup,
+.swarm-app .swarm-chat-window-controls,
+.swarm-app .swarm-chat-window-segmentedActions {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size80);
+	min-width: 0;
+}
+
+.swarm-app .swarm-chat-window-titleGroup {
+	flex: 1 1 auto;
+	overflow: hidden;
+}
+
+.swarm-app .swarm-chat-window-controls {
+	flex: none;
+	gap: var(--vscode-spacing-size100);
+}
+
+.swarm-app .swarm-chat-window-titleDot {
+	width: var(--vscode-spacing-size80);
+	height: var(--vscode-spacing-size80);
+	border-radius: var(--vscode-cornerRadius-circle);
+	background: var(--vscode-editorInfo-foreground);
+	flex: none;
+	opacity: 0.75;
+}
+
+.swarm-app .swarm-chat-window-title {
+	font-size: var(--vscode-fontSize-body1);
+	font-weight: var(--vscode-fontWeight-semiBold);
+	color: var(--vscode-sideBar-foreground);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.swarm-app .swarm-chat-window-status {
+	font-size: var(--vscode-fontSize-label2);
+	color: var(--vscode-descriptionForeground);
+	min-width: 36px;
+}
+
+.swarm-app .swarm-chat-window-segmentedActions {
+	padding: var(--vscode-spacing-size20) var(--vscode-spacing-size40);
+	border: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	border-radius: var(--vscode-cornerRadius-medium);
+	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 22%, transparent);
+}
+
+.swarm-app .swarm-chat-window-iconButton {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-icon-foreground);
+	opacity: 0.9;
+}
+
+.swarm-app .swarm-chat-window-iconButton:disabled {
+	opacity: 1;
+	cursor: default;
+}
+
+.swarm-app .swarm-chat-window-icon {
+	font-size: var(--vscode-codiconFontSize);
+}
+
+.swarm-app .swarm-chat-window-pill,
+.swarm-app .swarm-chat-window-attachmentPill,
+.swarm-app .swarm-chat-window-checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size20);
+	min-width: 0;
+	padding: var(--vscode-spacing-size20) var(--vscode-spacing-size40);
+	border-radius: var(--vscode-cornerRadius-medium);
+	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 18%, transparent);
+	color: var(--vscode-descriptionForeground);
+	font-size: var(--vscode-fontSize-label2);
+	white-space: nowrap;
+}
+
+.swarm-app .swarm-chat-window-pill span:last-child,
+.swarm-app .swarm-chat-window-attachmentPill span:last-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.swarm-app .swarm-chat-window-pill .swarm-chat-window-icon:last-child {
+	font-size: var(--vscode-codiconFontSize-compact);
+	opacity: 0.8;
+}
+
+.swarm-app .swarm-chat-window-checkbox input {
+	margin: 0;
+	accent-color: var(--vscode-checkbox-selectBackground);
+}
+
+.swarm-app .swarm-chat-window-checkbox span {
+	color: var(--vscode-sideBar-foreground);
+}
+
+.swarm-app .swarm-chat-window-contextRow {
+	justify-content: space-between;
+	flex-wrap: nowrap;
+	padding-top: var(--vscode-spacing-size80);
+}
+
+.swarm-app .swarm-chat-window-contextGroup {
+	flex: 1 1 auto;
+	flex-wrap: nowrap;
+	min-width: 0;
+	overflow: hidden;
+}
+
+.swarm-app .swarm-chat-window-checkbox {
+	flex: none;
+}
+
+.swarm-app .swarm-agent-grid-chatWidget .chat-input-toolbars {
+	margin-top: var(--vscode-spacing-size20);
+	gap: var(--vscode-spacing-size20);
+	padding-inline: var(--vscode-spacing-size20);
+}
+
+/* The composer's default bottom padding (6px) leaves the toolbar row sitting
+ * noticeably higher than the editor above it, which reads as an off-center
+ * composer. Balance the bottom against the top breathing room so the toolbar
+ * row is vertically centered in the composer. */
+.swarm-app .swarm-agent-grid-chatWidget .chat-input-container {
+	padding-bottom: var(--vscode-spacing-size20);
+}
+
+/* Fill the textfield with the editor background so the composer reads as part
+ * of the chat surface rather than a distinct input well. Match the core rule's
+ * specificity (`.monaco-workbench .interactive-session .chat-input-container`)
+ * so the swarm override wins. */
+.monaco-workbench .swarm-app .swarm-agent-grid-chatWidget .interactive-session .chat-input-container {
+	background-color: var(--vscode-editor-background);
+}
+
+/* The Monaco editor inside the composer paints its own background from
+ * `--vscode-input-background` (see chat.css), so the container override above
+ * is not enough on its own. Repaint the editor surface to match. */
+.monaco-workbench .swarm-app .swarm-agent-grid-chatWidget .interactive-session .interactive-input-part .chat-editor-container .interactive-input-editor .monaco-editor,
+.monaco-workbench .swarm-app .swarm-agent-grid-chatWidget .interactive-session .interactive-input-part .chat-editor-container .interactive-input-editor .monaco-editor .monaco-editor-background {
+	background-color: var(--vscode-editor-background);
+}
+
+/* Give the composer breathing room from the bottom edge of the chat window.
+ * The modern UI theme zeroes the input part's bottom padding, which reads as
+ * the textfield being flush against the cell border in the swarm grid. Match
+ * the theme's specificity so the swarm composer keeps a bottom inset. */
+.monaco-workbench .swarm-app .swarm-agent-grid-chatWidget .interactive-session .interactive-input-part {
+	padding-bottom: var(--vscode-spacing-size80);
+}
+
+.swarm-app .swarm-agent-grid-chatWidget .chat-secondary-toolbar {
+	padding: 0;
+	gap: var(--vscode-spacing-size20);
+}
+
+.swarm-app .swarm-chat-viewpane > .voice-agent-controls-wrapper {
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+}
+
+.swarm-app .swarm-agent-grid-chatWidget {
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+}
+
+.swarm-app .swarm-chat-viewpane .interactive-session {
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	max-width: none;
+	margin: 0;
+}
+
+/* ---------- Chat window faces (chat <-> code) ---------- */
+
+/* The chat window shows one face at a time. The chat face is the live
+ * ChatWidget; the code face is the mini code view.
+ * NOTE: the hidden rule must out-specify the pane rules that set
+ * `display: flex` on `.swarm-chat-viewpane > .voice-agent-controls-wrapper`
+ * (3 classes) and `.swarm-code-view-host` (2 classes), otherwise the hidden
+ * face keeps rendering behind the visible one. */
+.swarm-app .swarm-chat-viewpane > .swarm-chat-face-hidden,
+.swarm-app .swarm-chat-viewpane > .swarm-code-view-host.swarm-chat-face-hidden {
+	display: none;
+}
+
+.swarm-app .swarm-code-view-host {
+	display: flex;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+}
+
+.swarm-app .swarm-chat-window-iconButton-active {
+	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 60%, transparent);
+	color: var(--vscode-foreground);
+}
+
+/* ---------- Mini code view ---------- */
+
+.swarm-app .swarm-code-view {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	background: var(--vscode-editor-background);
+	color: var(--vscode-editor-foreground);
+}
+
+.swarm-app .swarm-code-view-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size80);
+	flex: 1 1 auto;
+	min-height: 0;
+	padding: var(--vscode-spacing-size80);
+	overflow: auto;
+}
+
+.swarm-app .swarm-code-view-empty {
+	margin: auto;
+	font-size: var(--vscode-fontSize-label2);
+	color: var(--vscode-descriptionForeground);
+	text-align: center;
+}
+
+.swarm-app .swarm-code-view-file {
+	display: flex;
+	flex-direction: column;
+	border: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	border-radius: var(--vscode-cornerRadius-medium);
+	overflow: hidden;
+	flex: none;
+}
+
+.swarm-app .swarm-code-view-fileHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size40);
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
+	border-bottom: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	background: color-mix(in srgb, var(--vscode-sideBar-background) 60%, transparent);
+}
+
+.swarm-app .swarm-code-view-fileIcon {
+	font-size: var(--vscode-codiconFontSize-compact);
+	flex: none;
+}
+
+.swarm-app .swarm-code-view-filePath {
+	flex: 1 1 auto;
+	min-width: 0;
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label2);
+	color: var(--vscode-foreground);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.swarm-app .swarm-code-view-status-modified {
+	color: var(--vscode-gitDecoration-modifiedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-status-added {
+	color: var(--vscode-gitDecoration-addedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-status-deleted {
+	color: var(--vscode-gitDecoration-deletedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-editingBadge {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size20);
+	flex: none;
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label3);
+	color: var(--vscode-gitDecoration-modifiedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-additions,
+.swarm-app .swarm-code-view-deletions {
+	flex: none;
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label3);
+}
+
+.swarm-app .swarm-code-view-additions {
+	color: var(--vscode-gitDecoration-addedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-deletions {
+	color: var(--vscode-gitDecoration-deletedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label3);
+	line-height: 1.5;
+}
+
+.swarm-app .swarm-code-view-gutter {
+	width: 20px;
+	padding: 0 var(--vscode-spacing-size40);
+	text-align: center;
+	user-select: none;
+	color: var(--vscode-descriptionForeground);
+	border-right: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+}
+
+.swarm-app .swarm-code-view-hunkRow .swarm-code-view-gutter {
+	background: color-mix(in srgb, var(--vscode-sideBar-background) 40%, transparent);
+}
+
+.swarm-app .swarm-code-view-hunkCell {
+	padding: 0 var(--vscode-spacing-size60);
+	white-space: pre;
+	color: var(--vscode-descriptionForeground);
+	background: color-mix(in srgb, var(--vscode-editorInfo-foreground) 10%, transparent);
+}
+
+.swarm-app .swarm-code-view-lineRow .swarm-code-view-gutter {
+	color: color-mix(in srgb, var(--vscode-descriptionForeground) 70%, transparent);
+}
+
+.swarm-app .swarm-code-view-line-add {
+	background: color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground) 12%, transparent);
+}
+
+.swarm-app .swarm-code-view-line-add .swarm-code-view-gutter {
+	color: var(--vscode-gitDecoration-addedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-line-delete {
+	background: color-mix(in srgb, var(--vscode-gitDecoration-deletedResourceForeground) 12%, transparent);
+}
+
+.swarm-app .swarm-code-view-line-delete .swarm-code-view-gutter {
+	color: var(--vscode-gitDecoration-deletedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-lineCell {
+	padding: 0;
+	position: relative;
+}
+
+.swarm-app .swarm-code-view-lineContent {
+	display: flex;
+	align-items: center;
+	min-width: 0;
+}
+
+.swarm-app .swarm-code-view-lineText {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 0 var(--vscode-spacing-size60);
+	white-space: pre;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.swarm-app .swarm-code-view-line-add .swarm-code-view-lineText {
+	color: var(--vscode-gitDecoration-addedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-line-delete .swarm-code-view-lineText {
+	color: var(--vscode-gitDecoration-deletedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-lineInput {
+	flex: 1 1 auto;
+	min-width: 0;
+	padding: 0 var(--vscode-spacing-size60);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	font-family: inherit;
+	font-size: inherit;
+	line-height: inherit;
+	outline: none;
+}
+
+.swarm-app .swarm-code-view-lineInput:focus {
+	background: color-mix(in srgb, var(--vscode-focusBorder) 12%, transparent);
+}
+
+.swarm-app .swarm-code-view-lineInput-modified {
+	color: var(--vscode-gitDecoration-modifiedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-addComment {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 20px;
+	height: 20px;
+	margin-right: var(--vscode-spacing-size40);
+	padding: 0;
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-code-view-lineRow:hover .swarm-code-view-addComment {
+	display: inline-flex;
+}
+
+.swarm-app .swarm-code-view-commentRow .swarm-code-view-gutter {
+	background: color-mix(in srgb, var(--vscode-sideBar-background) 30%, transparent);
+}
+
+.swarm-app .swarm-code-view-commentCell {
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
+	background: color-mix(in srgb, var(--vscode-sideBar-background) 30%, transparent);
+}
+
+.swarm-app .swarm-code-view-commentList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size40);
+}
+
+.swarm-app .swarm-code-view-comment {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--vscode-spacing-size40);
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
+	border: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	border-radius: var(--vscode-cornerRadius-medium);
+	background: var(--vscode-editorWidget-background);
+}
+
+.swarm-app .swarm-code-view-comment > .swarm-code-view-fileIcon {
+	margin-top: 2px;
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-app .swarm-code-view-commentText {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label2);
+	line-height: 1.5;
+	white-space: pre-wrap;
+	color: var(--vscode-foreground);
+}
+
+.swarm-app .swarm-code-view-commentRemove {
+	flex: none;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: var(--vscode-descriptionForeground);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-code-view-commentRemove:hover {
+	color: var(--vscode-foreground);
+}
+
+.swarm-app .swarm-code-view-commentEditor {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size40);
+	padding: var(--vscode-spacing-size40);
+	border: var(--vscode-strokeThickness) solid color-mix(in srgb, var(--vscode-focusBorder) 40%, transparent);
+	border-radius: var(--vscode-cornerRadius-medium);
+	background: var(--vscode-editorWidget-background);
+}
+
+.swarm-app .swarm-code-view-commentInput {
+	width: 100%;
+	box-sizing: border-box;
+	resize: none;
+	border: 0;
+	background: transparent;
+	color: var(--vscode-input-foreground);
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label2);
+	line-height: 1.5;
+	outline: none;
+}
+
+.swarm-app .swarm-code-view-commentActions {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--vscode-spacing-size40);
+}
+
+.swarm-app .swarm-code-view-commentCancel,
+.swarm-app .swarm-code-view-commentSave {
+	padding: var(--vscode-spacing-size20) var(--vscode-spacing-size60);
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label3);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-code-view-commentCancel {
+	background: transparent;
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-app .swarm-code-view-commentCancel:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}
+
+.swarm-app .swarm-code-view-commentSave {
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+}
+
+.swarm-app .swarm-code-view-commentSave:disabled {
+	opacity: 0.4;
+	cursor: default;
+}
+
+/* ---------- Review footer ---------- */
+
+.swarm-app .swarm-code-view-review {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size60);
+	flex: none;
+	padding: var(--vscode-spacing-size60);
+	border: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	border-radius: var(--vscode-cornerRadius-medium);
+	background: var(--vscode-editorWidget-background);
+}
+
+.swarm-app .swarm-code-view-reviewHeading {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size60);
+}
+
+.swarm-app .swarm-code-view-reviewTitle {
+	font-size: var(--vscode-fontSize-label2);
+	font-weight: var(--vscode-fontWeight-semiBold);
+	color: var(--vscode-foreground);
+}
+
+.swarm-app .swarm-code-view-reviewCount {
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label3);
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-app .swarm-code-view-editToggle {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size20);
+	flex: none;
+	margin-left: auto;
+	padding: var(--vscode-spacing-size20) var(--vscode-spacing-size60);
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-descriptionForeground);
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label3);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-code-view-editToggle:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+	color: var(--vscode-foreground);
+}
+
+.swarm-app .swarm-code-view-editBanner {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size40);
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
+	border: var(--vscode-strokeThickness) solid color-mix(in srgb, var(--vscode-gitDecoration-modifiedResourceForeground) 40%, transparent);
+	border-radius: var(--vscode-cornerRadius-medium);
+	background: color-mix(in srgb, var(--vscode-gitDecoration-modifiedResourceForeground) 10%, transparent);
+}
+
+.swarm-app .swarm-code-view-editBanner > .swarm-code-view-fileIcon {
+	color: var(--vscode-gitDecoration-modifiedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-editBannerText {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label3);
+	color: var(--vscode-foreground);
+}
+
+.swarm-app .swarm-code-view-editCount {
+	flex: none;
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label3);
+	color: var(--vscode-gitDecoration-modifiedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-editDone {
+	flex: none;
+	padding: var(--vscode-spacing-size20) var(--vscode-spacing-size60);
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label3);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-code-view-editDone:hover {
+	background: var(--vscode-button-hoverBackground);
+}
+
+.swarm-app .swarm-code-view-reviewSummary {
+	width: 100%;
+	box-sizing: border-box;
+	resize: none;
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
+	border: var(--vscode-strokeThickness) solid var(--vscode-input-border, transparent);
+	border-radius: var(--vscode-cornerRadius-small);
+	background: var(--vscode-input-background);
+	color: var(--vscode-input-foreground);
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label2);
+	line-height: 1.5;
+	outline: none;
+}
+
+.swarm-app .swarm-code-view-reviewSummary:focus {
+	border-color: var(--vscode-focusBorder);
+}
+
+.swarm-app .swarm-code-view-reviewActions {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size60);
+}
+
+.swarm-app .swarm-code-view-verdicts {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size20);
+	padding: var(--vscode-spacing-size20);
+	border: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	border-radius: var(--vscode-cornerRadius-small);
+	background: color-mix(in srgb, var(--vscode-sideBar-background) 40%, transparent);
+}
+
+.swarm-app .swarm-code-view-verdict {
+	padding: var(--vscode-spacing-size20) var(--vscode-spacing-size60);
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-descriptionForeground);
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label3);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-code-view-verdict:hover {
+	color: var(--vscode-foreground);
+}
+
+.swarm-app .swarm-code-view-verdict-active {
+	background: var(--vscode-editor-background);
+	color: var(--vscode-foreground);
+}
+
+.swarm-app .swarm-code-view-verdict-approve {
+	color: var(--vscode-gitDecoration-addedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-verdict-changes {
+	color: var(--vscode-gitDecoration-deletedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-submit {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size40);
+	margin-left: auto;
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size80);
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label2);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-code-view-submit:hover {
+	background: var(--vscode-button-hoverBackground);
+}
+
+.swarm-app .swarm-code-view-reviewBanner {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size40);
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
+	border: var(--vscode-strokeThickness) solid color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground) 40%, transparent);
+	border-radius: var(--vscode-cornerRadius-medium);
+	background: color-mix(in srgb, var(--vscode-gitDecoration-addedResourceForeground) 10%, transparent);
+}
+
+.swarm-app .swarm-code-view-reviewBanner > .swarm-code-view-fileIcon {
+	color: var(--vscode-gitDecoration-addedResourceForeground);
+}
+
+.swarm-app .swarm-code-view-reviewBannerText {
+	flex: 1 1 auto;
+	min-width: 0;
+	margin: 0;
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label3);
+	color: var(--vscode-foreground);
+}
+
+.swarm-app .swarm-code-view-reviewEdit {
+	flex: none;
+	padding: var(--vscode-spacing-size20) var(--vscode-spacing-size60);
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-descriptionForeground);
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label3);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-code-view-reviewEdit:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}

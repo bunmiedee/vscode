@@ -2407,6 +2407,12 @@ configurationRegistry.registerConfiguration({
 			description: nls.localize('chat.titleBar.openInAgentsWindow.enabled', "Controls whether the Open in Agents Window button is shown in the title bar."),
 			default: true,
 		},
+		[ChatConfiguration.TitleBarAgentGridModeEnabled]: {
+			type: 'boolean',
+			description: nls.localize('chat.titleBar.agentGridMode.enabled', "Controls whether Agent Grid Mode is enabled, showing the concurrent coding agents grid surface."),
+			default: false,
+			tags: ['experimental'],
+		},
 		[ChatConfiguration.OpenInAgentsWindowRevealCurrentSession]: {
 			type: 'boolean',
 			description: nls.localize('chat.experimental.openInAgentsWindow.revealCurrentSession', "Controls whether Open in Agents Window reveals the current local Agent Host session instead of opening a new session."),

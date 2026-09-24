@@ -114,7 +114,7 @@ import { IChatResponseViewModel, isResponseVM } from '../../../common/model/chat
 import { IChatAgentService } from '../../../common/participants/chatAgents.js';
 import { ILanguageModelToolsService } from '../../../common/tools/languageModelToolsService.js';
 import { ChatHistoryNavigator } from '../../../common/widget/chatWidgetHistoryService.js';
-import { ChatEditingSessionSubmitAction, ChatSessionPrimaryPickerAction, ChatSubmitAction, IChatExecuteActionContext, OpenDelegationPickerAction, OpenModelPickerAction, OpenModePickerAction, OpenPermissionPickerAction, OpenSessionTargetPickerAction, OpenWorkspacePickerAction } from '../../actions/chatExecuteActions.js';
+import { ChatEditingSessionSubmitAction, ChatSessionPrimaryPickerAction, ChatSubmitAction, IChatExecuteActionContext, OpenDelegationPickerAction, OpenModelPickerAction, OpenModePickerAction, OpenPairPickerAction, OpenPermissionPickerAction, OpenSessionTargetPickerAction, OpenWorkspacePickerAction } from '../../actions/chatExecuteActions.js';
 import { ChatVoiceInputModeAction, VoiceInputModeActionViewItem } from '../../voiceInputMode/voiceInputModeActionViewItem.js';
 import { ChatSpeechToTextConnectingAction, ChatSpeechToTextPreparingAction, ToggleChatSpeechToTextAction } from '../../actions/chatSpeechToTextActions.js';
 import { DictationActionViewItem } from '../../speechToText/dictationActionViewItem.js';
@@ -173,6 +173,7 @@ import { DelegationSessionPickerActionItem } from './delegationSessionPickerActi
 import { ModelPickerActionItem, IModelPickerDelegate, IModelPickerPresentationOptions } from './modelPicker/modelPickerActionItem.js';
 import { IModePickerDelegate, ModePickerActionItem } from './modePickerActionItem.js';
 import { IPermissionPickerDelegate, PermissionPickerActionItem } from './permissionPickerActionItem.js';
+import { PairPickerActionItem } from './pairPickerActionItem.js';
 import { SessionTypePickerActionItem } from './sessionTargetPickerActionItem.js';
 import { WorkspacePickerActionItem } from './workspacePickerActionItem.js';
 import { ChatContextUsageWidget } from '../../widgetHosts/viewPane/chatContextUsageWidget.js';
@@ -337,6 +338,12 @@ export interface IChatInputPartOptions {
 	 * When true, the secondary toolbar (permissions picker) is hidden.
 	 */
 	isSessionsWindow?: boolean;
+	/**
+	 * Whether the input is rendered inside the swarm agent grid.
+	 * When true, the secondary toolbar row is removed and the permission
+	 * picker plus the Pair picker move into the textfield toolbar.
+	 */
+	swarmComposer?: boolean;
 	/**
 	 * Total horizontal gutter (in pixels) reserved outside the input box when
 	 * computing the editor width. Defaults account for the `.interactive-input-part`
@@ -1535,8 +1542,61 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 		};
 	}
 
-	public openPermissionPicker(): void {
-		this.permissionWidget?.show();
+	public openPermissionPicker(anchor?: HTMLElement): void {
+		this.permissionWidget?.show(anchor);
+	}
+
+	/**
+	 * Creates the native permission picker action view item and tracks it as
+	 * {@link permissionWidget} so {@link openPermissionPicker} and
+	 * {@link setPermissionLevel} can drive it. Shared by the secondary toolbar
+	 * (default composer) and the textfield toolbar (swarm composer).
+	 */
+	private _createPermissionPicker(action: MenuItemAction, options: IActionViewItemOptions | undefined): PermissionPickerActionItem {
+		const delegate: IPermissionPickerDelegate = {
+			currentPermissionLevel: this._currentPermissionLevel,
+			setPermissionLevel: (level: ChatPermissionLevel) => {
+				this.setPermissionLevel(level);
+			},
+			getExtensionPermissions: () => {
+				const sessionResource = this.getCurrentSessionResource();
+				const group = this.getActiveExtensionPermissionGroup(sessionResource);
+				if (!group) {
+					return undefined;
+				}
+				const current = sessionResource ? this.chatSessionsService.getSessionOption(sessionResource, group.id) : undefined;
+				const defaultId = group.selected?.id ?? group.items.find(i => i.default)?.id;
+				const rawSelectedId = current === undefined
+					? defaultId
+					: typeof current === 'string' ? current : current.id;
+				const selectedId = rawSelectedId !== undefined && group.items.some(i => i.id === rawSelectedId)
+					? rawSelectedId
+					: defaultId;
+				const sessionType = sessionResource
+					? getChatSessionType(sessionResource)
+					: (this.options.sessionTypePickerDelegate?.getActiveSessionProvider?.() ?? '');
+				return { sessionType, groupId: group.id, items: group.items, selectedId };
+			},
+			setExtensionPermission: (groupId: string, item: IChatSessionProviderOptionItem) => {
+				this.updateOptionContextKey(groupId, item.id);
+				this.getOrCreateOptionEmitter(groupId).fire(item);
+				const sessionResource = this.getCurrentSessionResource();
+				if (sessionResource) {
+					this.chatSessionsService.setSessionOption(sessionResource, groupId, item);
+				}
+				this.permissionWidget?.refresh();
+			},
+			isSandboxToggleApplicable: () => this.getEffectiveSessionType(this.getCurrentSessionResource()) === SessionType.Local,
+		};
+		const widget = this.instantiationService.createInstance(PermissionPickerActionItem, action, delegate, options);
+		this.permissionWidget = widget;
+		this.permissionWidgetDisposeListener.value = widget.onDidDispose(() => {
+			if (this.permissionWidget === widget) {
+				this.permissionWidget = undefined;
+			}
+			this.permissionWidgetDisposeListener.clear();
+		});
+		return widget;
 	}
 
 	public setPermissionLevel(level: ChatPermissionLevel): void {
@@ -3321,7 +3381,7 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 		const toolbarsContainer = elements.inputToolbars;
 		this.secondaryToolbarContainer = elements.secondaryToolbar;
 		const responsivePickerContainer = elements.responsivePickerContainer;
-		if (this.options.renderStyle === 'compact') {
+		if (this.options.renderStyle === 'compact' || this.options.swarmComposer) {
 			this.secondaryToolbarContainer.style.display = 'none';
 		}
 		this.chatEditingSessionWidgetContainer = elements.chatEditingSessionWidgetContainer;
@@ -3740,6 +3800,17 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 				this.inputActionsToolbar.refresh();
 			}
 		}));
+		// Swarm composer: the Pair control and permission picker (shield) are
+		// hosted on the execute toolbar, just before the mic button, and render
+		// icon-only. They share a compact state that is forced on so the labels
+		// never show.
+		const executePickerCompactStates = new Map<string, ISettableObservable<boolean>>();
+		const executeOverflowPickerHandlers = new Map<string, (anchor: HTMLElement) => void>();
+		const getExecutePickerOptions = (actionId: string): IChatInputPickerOptions => ({
+			getOverflowAnchor: () => this.executeToolbar.getElement(),
+			actionContext: { widget },
+			compact: getCompactState(executePickerCompactStates, actionId),
+		});
 		this.executeToolbar = this._register(this.instantiationService.createInstance(MenuWorkbenchToolBar, toolbarsContainer, this.options.menus.executeToolbar, {
 			telemetrySource: this.options.menus.telemetrySource,
 			menuOptions: {
@@ -3769,6 +3840,19 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 				if (action.id === ToggleChatSpeechToTextAction.ID && action instanceof MenuItemAction) {
 					return this.instantiationService.createInstance(DictationActionViewItem, action, options, isDictationInputActive);
 				}
+				// Swarm composer: the Pair control and the permission picker
+				// (shield) live in the execute toolbar, just before the mic
+				// button, and render icon-only (no labels).
+				if (action.id === OpenPairPickerAction.ID && action instanceof MenuItemAction) {
+					const createPicker = () => this.instantiationService.createInstance(PairPickerActionItem, action, getExecutePickerOptions(action.id));
+					executeOverflowPickerHandlers.set(action.id, anchor => showOverflowPicker(createPicker, anchor));
+					return createPicker();
+				}
+				if (action.id === OpenPermissionPickerAction.ID && action instanceof MenuItemAction) {
+					const createPicker = () => this._createPermissionPicker(action, getExecutePickerOptions(action.id));
+					executeOverflowPickerHandlers.set(action.id, anchor => showOverflowPicker(createPicker, anchor));
+					return createPicker();
+				}
 				// Voice Mode mic button: add a right-click context menu (Select
 				// Microphone / Disable Voice Mode) mirroring dictation. While
 				// listening the toolbar swaps the start action for the
@@ -3781,6 +3865,12 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 		}));
 		this.executeToolbar.getElement().classList.add('chat-execute-toolbar');
 		this.executeToolbar.context = { widget } satisfies IChatExecuteActionContext;
+		// Swarm composer: force the Pair and permission pickers to render
+		// icon-only (no labels) in the execute toolbar.
+		if (this.options.swarmComposer) {
+			getCompactState(executePickerCompactStates, OpenPairPickerAction.ID).set(true, undefined);
+			getCompactState(executePickerCompactStates, OpenPermissionPickerAction.ID).set(true, undefined);
+		}
 		// The lone dictation / Voice Mode control drops its circular border and
 		// only regains it when both share the row (see the matching rules in
 		// chat.css). Count the voice-input actions from the toolbar's action
@@ -3919,52 +4009,9 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 						return new HiddenActionViewItem(action);
 					}
 				} else if (action.id === OpenPermissionPickerAction.ID && action instanceof MenuItemAction) {
-					const delegate: IPermissionPickerDelegate = {
-						currentPermissionLevel: this._currentPermissionLevel,
-						setPermissionLevel: (level: ChatPermissionLevel) => {
-							this.setPermissionLevel(level);
-						},
-						getExtensionPermissions: () => {
-							const sessionResource = this.getCurrentSessionResource();
-							const group = this.getActiveExtensionPermissionGroup(sessionResource);
-							if (!group) {
-								return undefined;
-							}
-							const current = sessionResource ? this.chatSessionsService.getSessionOption(sessionResource, group.id) : undefined;
-							const defaultId = group.selected?.id ?? group.items.find(i => i.default)?.id;
-							const rawSelectedId = current === undefined
-								? defaultId
-								: typeof current === 'string' ? current : current.id;
-							const selectedId = rawSelectedId !== undefined && group.items.some(i => i.id === rawSelectedId)
-								? rawSelectedId
-								: defaultId;
-							const sessionType = sessionResource
-								? getChatSessionType(sessionResource)
-								: (this.options.sessionTypePickerDelegate?.getActiveSessionProvider?.() ?? '');
-							return { sessionType, groupId: group.id, items: group.items, selectedId };
-						},
-						setExtensionPermission: (groupId: string, item: IChatSessionProviderOptionItem) => {
-							this.updateOptionContextKey(groupId, item.id);
-							this.getOrCreateOptionEmitter(groupId).fire(item);
-							const sessionResource = this.getCurrentSessionResource();
-							if (sessionResource) {
-								this.chatSessionsService.setSessionOption(sessionResource, groupId, item);
-							}
-							this.permissionWidget?.refresh();
-						},
-						isSandboxToggleApplicable: () => this.getEffectiveSessionType(this.getCurrentSessionResource()) === SessionType.Local,
-					};
-					const createPicker = () => this.instantiationService.createInstance(PermissionPickerActionItem, action, delegate, getSecondaryPickerOptions(action.id));
+					const createPicker = () => this._createPermissionPicker(action, getSecondaryPickerOptions(action.id));
 					secondaryOverflowPickerHandlers.set(action.id, anchor => showOverflowPicker(createPicker, anchor));
-					const widget = createPicker();
-					this.permissionWidget = widget;
-					this.permissionWidgetDisposeListener.value = widget.onDidDispose(() => {
-						if (this.permissionWidget === widget) {
-							this.permissionWidget = undefined;
-						}
-						this.permissionWidgetDisposeListener.clear();
-					});
-					return widget;
+					return createPicker();
 				} else if (agentHostPickerProperty && action instanceof MenuItemAction) {
 					if (this.options.isSessionsWindow) {
 						return new HiddenActionViewItem(action);
