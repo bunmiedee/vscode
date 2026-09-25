@@ -28,6 +28,10 @@ let agentGridModeContribution: AgentGridModeContribution | undefined;
 /**
  * Adds a new agent chat to the swarm grid. Only visible while the swarm surface
  * is showing, where it replaces the workbench layout controls in the title bar.
+ *
+ * It lives in the right-aligned global title bar actions (rather than the
+ * center-adjacent toolbar) so it sits at the far right of the title bar, next
+ * to the other global actions.
  */
 class AddSwarmChatAction extends Action2 {
 
@@ -38,8 +42,9 @@ class AddSwarmChatAction extends Action2 {
 			f1: false,
 			icon: Codicon.add,
 			menu: {
-				id: MenuId.TitleBarAdjacentCenter,
-				order: -1000,
+				id: MenuId.TitleBar,
+				group: 'navigation',
+				order: 10010,
 				when: SwarmModeActiveContext,
 			},
 		});
