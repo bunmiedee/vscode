@@ -444,20 +444,21 @@
 	gap: var(--vscode-spacing-size40);
 	height: 28px;
 	padding: 0 var(--vscode-spacing-size120);
-	border: var(--vscode-strokeThickness) solid transparent;
+	border: var(--vscode-strokeThickness) solid var(--vscode-button-secondaryBorder, var(--vscode-button-border, transparent));
 	border-radius: var(--vscode-cornerRadius-small);
-	background: transparent;
-	color: var(--vscode-foreground);
+	background: var(--vscode-button-secondaryBackground);
+	color: var(--vscode-button-secondaryForeground);
 	font-size: var(--vscode-fontSize-body1);
 	font-family: inherit;
 	cursor: pointer;
 }
 
 .swarm-create-agent-button:hover {
-	background: var(--vscode-toolbar-hoverBackground);
+	background: var(--vscode-button-secondaryHoverBackground);
 }
 
 .swarm-create-agent-buttonPrimary {
+	border-color: transparent;
 	background: var(--vscode-button-background);
 	color: var(--vscode-button-foreground);
 }
