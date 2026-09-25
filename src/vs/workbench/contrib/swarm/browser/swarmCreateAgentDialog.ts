@@ -221,7 +221,8 @@ export class SwarmCreateAgentDialog extends Disposable {
 		this._appendIcon(choose, Codicon.folderOpened);
 		const chooseLabel = append(choose, $('span'));
 		chooseLabel.textContent = localize('swarm.createAgent.chooseDirectory', "Choose directory");
-		this._appendIcon(choose, Codicon.chevronDown);
+		const chooseChevron = append(choose, $('span.swarm-create-agent-linkButtonChevron'));
+		this._appendIcon(chooseChevron, Codicon.chevronDown);
 
 		const repo = append(section, $('.swarm-create-agent-repoCard'));
 		const repoIcon = append(repo, $('.swarm-create-agent-repoIcon'));
