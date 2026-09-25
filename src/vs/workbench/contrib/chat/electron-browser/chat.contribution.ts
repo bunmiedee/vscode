@@ -245,7 +245,10 @@ registerWorkbenchContribution2(ChatSuspendThrottlingHandler.ID, ChatSuspendThrot
 registerWorkbenchContribution2(ChatLifecycleHandler.ID, ChatLifecycleHandler, WorkbenchPhase.AfterRestored);
 registerWorkbenchContribution2(OpenWorkspaceInAgentsContribution.ID, OpenWorkspaceInAgentsContribution, WorkbenchPhase.BlockRestore);
 registerWorkbenchContribution2(ToggleAgentGridModeContribution.ID, ToggleAgentGridModeContribution, WorkbenchPhase.BlockRestore);
-registerWorkbenchContribution2(AgentGridModeContribution.ID, AgentGridModeContribution, WorkbenchPhase.BlockRestore);
+// The grid mode part hides workbench parts via the layout service, which
+// requires the workbench grid to exist. That is only guaranteed once the
+// workbench has been restored, so this contribution must not run earlier.
+registerWorkbenchContribution2(AgentGridModeContribution.ID, AgentGridModeContribution, WorkbenchPhase.AfterRestored);
 registerWorkbenchContribution2(AgentsHandoffInputTipContribution.ID, AgentsHandoffInputTipContribution, WorkbenchPhase.Eventually);
 registerWorkbenchContribution2(AgentsParallelWorkContribution.ID, AgentsParallelWorkContribution, WorkbenchPhase.Eventually);
 
