@@ -466,6 +466,10 @@
 	background: var(--vscode-button-hoverBackground);
 }
 
-.swarm-create-agent-icon {
+.swarm-create-agent-overlay .swarm-create-agent-icon {
+	/* Codicons set an explicit color via `.monaco-workbench .codicon`, so match
+	 * that specificity and inherit the surrounding text color (e.g. the primary
+	 * button's foreground) instead of the default icon color. */
+	color: inherit;
 	font-size: var(--vscode-codiconFontSize);
 }
