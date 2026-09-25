@@ -261,20 +261,24 @@
 	margin: 0;
 }
 
-/* ---------- Chat window faces (chat <-> code) ---------- */
+/* ---------- Chat window faces (chat <-> code <-> terminal) ---------- */
 
 /* The chat window shows one face at a time. The chat face is the live
- * ChatWidget; the code face is the mini code view.
+ * ChatWidget; the code face is the mini code view; the terminal face is the
+ * mini terminal view.
  * NOTE: the hidden rule must out-specify the pane rules that set
  * `display: flex` on `.swarm-chat-viewpane > .voice-agent-controls-wrapper`
- * (3 classes) and `.swarm-code-view-host` (2 classes), otherwise the hidden
- * face keeps rendering behind the visible one. */
+ * (3 classes), `.swarm-code-view-host` (2 classes) and
+ * `.swarm-terminal-view-host` (2 classes), otherwise the hidden face keeps
+ * rendering behind the visible one. */
 .swarm-app .swarm-chat-viewpane > .swarm-chat-face-hidden,
-.swarm-app .swarm-chat-viewpane > .swarm-code-view-host.swarm-chat-face-hidden {
+.swarm-app .swarm-chat-viewpane > .swarm-code-view-host.swarm-chat-face-hidden,
+.swarm-app .swarm-chat-viewpane > .swarm-terminal-view-host.swarm-chat-face-hidden {
 	display: none;
 }
 
-.swarm-app .swarm-code-view-host {
+.swarm-app .swarm-code-view-host,
+.swarm-app .swarm-terminal-view-host {
 	display: flex;
 	flex: 1 1 auto;
 	min-width: 0;
@@ -833,4 +837,168 @@
 
 .swarm-app .swarm-code-view-reviewEdit:hover {
 	background: var(--vscode-toolbar-hoverBackground);
+}
+
+/* ---------- Mini terminal view ---------- */
+
+.swarm-app .swarm-terminal-view {
+	display: flex;
+	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	background: var(--vscode-terminal-background, var(--vscode-editor-background));
+	color: var(--vscode-terminal-foreground, var(--vscode-editor-foreground));
+}
+
+.swarm-app .swarm-terminal-view-tabStrip {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size20);
+	flex: none;
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
+	border-bottom: var(--vscode-strokeThickness) solid var(--vscode-terminal-border, var(--vscode-panel-border));
+	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 22%, transparent);
+}
+
+.swarm-app .swarm-terminal-view-tab {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size40);
+	height: 24px;
+	padding: 0 var(--vscode-spacing-size80);
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-descriptionForeground);
+	font-family: inherit;
+	font-size: var(--vscode-fontSize-label2);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-terminal-view-tab:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}
+
+.swarm-app .swarm-terminal-view-tab-active {
+	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 60%, transparent);
+	color: var(--vscode-foreground);
+}
+
+.swarm-app .swarm-terminal-view-tabIcon {
+	font-size: var(--vscode-codiconFontSize-compact);
+	opacity: 0.85;
+}
+
+.swarm-app .swarm-terminal-view-tabLabel {
+	white-space: nowrap;
+}
+
+.swarm-app .swarm-terminal-view-addTab {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-icon-foreground);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-terminal-view-addTab:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}
+
+.swarm-app .swarm-terminal-view-addTabIcon {
+	font-size: var(--vscode-codiconFontSize-compact);
+}
+
+.swarm-app .swarm-terminal-view-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size20);
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow: auto;
+	padding: var(--vscode-spacing-size80) var(--vscode-spacing-size100);
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label3);
+	line-height: 1.5;
+}
+
+.swarm-app .swarm-terminal-view-line {
+	display: flex;
+	gap: var(--vscode-spacing-size60);
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+
+.swarm-app .swarm-terminal-view-linePrefix {
+	flex: none;
+	width: 1ch;
+	text-align: center;
+	opacity: 0.9;
+}
+
+.swarm-app .swarm-terminal-view-lineText {
+	min-width: 0;
+}
+
+.swarm-app .swarm-terminal-view-line-command {
+	color: var(--vscode-terminal-foreground, var(--vscode-editor-foreground));
+}
+
+.swarm-app .swarm-terminal-view-line-command .swarm-terminal-view-linePrefix {
+	color: var(--vscode-terminal-ansiGreen, var(--vscode-terminal-foreground));
+}
+
+.swarm-app .swarm-terminal-view-line-output {
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-app .swarm-terminal-view-line-success {
+	color: var(--vscode-terminal-ansiGreen, var(--vscode-terminal-foreground));
+}
+
+.swarm-app .swarm-terminal-view-line-error {
+	color: var(--vscode-terminal-ansiRed, var(--vscode-terminal-foreground));
+}
+
+.swarm-app .swarm-terminal-view-line-info {
+	color: var(--vscode-terminal-ansiBrightBlack, var(--vscode-descriptionForeground));
+	font-style: italic;
+}
+
+.swarm-app .swarm-terminal-view-promptRow {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size60);
+	flex: none;
+	padding: var(--vscode-spacing-size60) var(--vscode-spacing-size100);
+	border-top: var(--vscode-strokeThickness) solid var(--vscode-terminal-border, var(--vscode-panel-border));
+	font-family: var(--monaco-monospace-font);
+	font-size: var(--vscode-fontSize-label3);
+}
+
+.swarm-app .swarm-terminal-view-promptIcon {
+	flex: none;
+	color: var(--vscode-terminal-ansiGreen, var(--vscode-terminal-foreground));
+	font-size: var(--vscode-codiconFontSize-compact);
+}
+
+.swarm-app .swarm-terminal-view-promptInput {
+	flex: 1 1 auto;
+	min-width: 0;
+	border: 0;
+	background: transparent;
+	color: var(--vscode-terminal-foreground, var(--vscode-editor-foreground));
+	font-family: inherit;
+	font-size: inherit;
+	outline: none;
+}
+
+.swarm-app .swarm-terminal-view-promptInput::placeholder {
+	color: var(--vscode-input-placeholderForeground);
 }

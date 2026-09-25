@@ -28,6 +28,8 @@ import { ChatWidget } from '../../chat/browser/widget/chatWidget.js';
 import { ISwarmActivityItem, ISwarmAppInfo, SwarmView } from '../common/swarm.js';
 import { SwarmCodeView } from './swarmCodeView.js';
 import { getSeedDiffsForPreset } from './swarmCodeViewData.js';
+import { SwarmTerminalView } from './swarmTerminalView.js';
+import { getSeedTerminalTabsForPreset } from './swarmTerminalViewData.js';
 import { ISwarmCreateAgentResult, showSwarmCreateAgentDialog } from './swarmCreateAgentDialog.js';
 
 interface ISwarmChatCell {
@@ -40,6 +42,7 @@ interface ISwarmChatCell {
 const enum SwarmChatFace {
 	Chat = 'chat',
 	Code = 'code',
+	Terminal = 'terminal',
 }
 
 interface ISwarmChatWindowPreset {
@@ -162,9 +165,11 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 		const controlsWrapper = append(viewPane, $('.voice-agent-controls-wrapper'));
 		const widgetHost = append(controlsWrapper, $('.chat-controls-container.swarm-agent-grid-chatWidget'));
 		const codeViewHost = append(viewPane, $('.swarm-code-view-host'));
-		this._renderChatWindowChrome(viewPane, preset, controlsWrapper, codeViewHost);
+		const terminalViewHost = append(viewPane, $('.swarm-terminal-view-host'));
+		this._renderChatWindowChrome(viewPane, preset, controlsWrapper, codeViewHost, terminalViewHost);
 		this._createChatCell(widgetHost);
 		this._createCodeView(codeViewHost, preset);
+		this._createTerminalView(terminalViewHost, preset);
 	}
 
 	/**
@@ -303,6 +308,11 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 		append(container, codeView.element);
 	}
 
+	private _createTerminalView(container: HTMLElement, preset: ISwarmChatWindowPreset): void {
+		const terminalView = this._chatCells.add(new SwarmTerminalView(getSeedTerminalTabsForPreset(preset.title)));
+		append(container, terminalView.element);
+	}
+
 	private async _acquireDefaultChatSession(): Promise<IChatModelReference | undefined> {
 		const agentHostEnabled = this.agentHostEnablementService.enabled.get();
 		const workspace = this.workspaceContextService.getWorkspace();
@@ -344,7 +354,7 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 		}
 	}
 
-	private _renderChatWindowChrome(container: HTMLElement, preset: ISwarmChatWindowPreset, chatPane: HTMLElement, codePane: HTMLElement): void {
+	private _renderChatWindowChrome(container: HTMLElement, preset: ISwarmChatWindowPreset, chatPane: HTMLElement, codePane: HTMLElement, terminalPane: HTMLElement): void {
 		// The header must be the first child of the pane so it renders above the
 		// chat/code faces, which are appended before this method runs.
 		const header = $('.swarm-chat-window-header');
@@ -361,19 +371,25 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 
 		const segmented = append(controls, $('.swarm-chat-window-segmentedActions'));
 		const setFace = (face: SwarmChatFace) => {
+			const showChat = face === SwarmChatFace.Chat;
 			const showCode = face === SwarmChatFace.Code;
-			chatPane.classList.toggle('swarm-chat-face-hidden', showCode);
+			const showTerminal = face === SwarmChatFace.Terminal;
+			chatPane.classList.toggle('swarm-chat-face-hidden', !showChat);
 			codePane.classList.toggle('swarm-chat-face-hidden', !showCode);
-			chatButton.classList.toggle('swarm-chat-window-iconButton-active', !showCode);
+			terminalPane.classList.toggle('swarm-chat-face-hidden', !showTerminal);
+			chatButton.classList.toggle('swarm-chat-window-iconButton-active', showChat);
 			codeButton.classList.toggle('swarm-chat-window-iconButton-active', showCode);
-			chatButton.setAttribute('aria-pressed', String(!showCode));
+			terminalButton.classList.toggle('swarm-chat-window-iconButton-active', showTerminal);
+			chatButton.setAttribute('aria-pressed', String(showChat));
 			codeButton.setAttribute('aria-pressed', String(showCode));
+			terminalButton.setAttribute('aria-pressed', String(showTerminal));
 		};
 		const chatButton = this._appendIconButton(segmented, Codicon.commentDiscussion, localize('swarm.chatAction.chat', "Chat"));
 		const codeButton = this._appendIconButton(segmented, Codicon.code, localize('swarm.chatAction.code', "Code"));
-		this._appendIconButton(segmented, Codicon.terminal, localize('swarm.chatAction.terminal', "Terminal"));
+		const terminalButton = this._appendIconButton(segmented, Codicon.terminal, localize('swarm.chatAction.terminal', "Terminal"));
 		this._chatCells.add(addDisposableListener(chatButton, 'click', () => setFace(SwarmChatFace.Chat)));
 		this._chatCells.add(addDisposableListener(codeButton, 'click', () => setFace(SwarmChatFace.Code)));
+		this._chatCells.add(addDisposableListener(terminalButton, 'click', () => setFace(SwarmChatFace.Terminal)));
 		setFace(SwarmChatFace.Chat);
 
 		this._appendIconButton(controls, Codicon.screenFull, localize('swarm.chatAction.maximize', "Maximize"));
