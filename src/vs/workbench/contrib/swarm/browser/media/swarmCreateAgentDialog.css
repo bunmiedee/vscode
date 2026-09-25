@@ -139,6 +139,7 @@
 
 .swarm-create-agent-nameInput,
 .swarm-create-agent-select {
+	box-sizing: border-box;
 	width: 100%;
 	height: 28px;
 	padding: 0 var(--vscode-spacing-size60);
@@ -179,6 +180,7 @@
 }
 
 .swarm-create-agent-inputWithIcon input {
+	box-sizing: border-box;
 	width: 100%;
 	height: 28px;
 	padding: 0 var(--vscode-spacing-size60) 0 var(--vscode-spacing-size200);
