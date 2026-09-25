@@ -29,7 +29,6 @@ import { ISwarmActivityItem, ISwarmAppInfo, SwarmView } from '../common/swarm.js
 import { SwarmCodeView } from './swarmCodeView.js';
 import { getSeedDiffsForPreset } from './swarmCodeViewData.js';
 import { SwarmTerminalView } from './swarmTerminalView.js';
-import { getSeedTerminalTabsForPreset } from './swarmTerminalViewData.js';
 import { ISwarmCreateAgentResult, showSwarmCreateAgentDialog } from './swarmCreateAgentDialog.js';
 
 interface ISwarmChatCell {
@@ -166,10 +165,10 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 		const widgetHost = append(controlsWrapper, $('.chat-controls-container.swarm-agent-grid-chatWidget'));
 		const codeViewHost = append(viewPane, $('.swarm-code-view-host'));
 		const terminalViewHost = append(viewPane, $('.swarm-terminal-view-host'));
-		this._renderChatWindowChrome(viewPane, preset, controlsWrapper, codeViewHost, terminalViewHost);
+		const terminalView = this._createTerminalView(terminalViewHost);
+		this._renderChatWindowChrome(viewPane, preset, controlsWrapper, codeViewHost, terminalViewHost, terminalView);
 		this._createChatCell(widgetHost);
 		this._createCodeView(codeViewHost, preset);
-		this._createTerminalView(terminalViewHost, preset);
 	}
 
 	/**
@@ -308,9 +307,10 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 		append(container, codeView.element);
 	}
 
-	private _createTerminalView(container: HTMLElement, preset: ISwarmChatWindowPreset): void {
-		const terminalView = this._chatCells.add(new SwarmTerminalView(getSeedTerminalTabsForPreset(preset.title)));
+	private _createTerminalView(container: HTMLElement): SwarmTerminalView {
+		const terminalView = this._chatCells.add(this.instantiationService.createInstance(SwarmTerminalView));
 		append(container, terminalView.element);
+		return terminalView;
 	}
 
 	private async _acquireDefaultChatSession(): Promise<IChatModelReference | undefined> {
@@ -354,7 +354,7 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 		}
 	}
 
-	private _renderChatWindowChrome(container: HTMLElement, preset: ISwarmChatWindowPreset, chatPane: HTMLElement, codePane: HTMLElement, terminalPane: HTMLElement): void {
+	private _renderChatWindowChrome(container: HTMLElement, preset: ISwarmChatWindowPreset, chatPane: HTMLElement, codePane: HTMLElement, terminalPane: HTMLElement, terminalView: SwarmTerminalView): void {
 		// The header must be the first child of the pane so it renders above the
 		// chat/code faces, which are appended before this method runs.
 		const header = $('.swarm-chat-window-header');
@@ -383,6 +383,10 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 			chatButton.setAttribute('aria-pressed', String(showChat));
 			codeButton.setAttribute('aria-pressed', String(showCode));
 			terminalButton.setAttribute('aria-pressed', String(showTerminal));
+			terminalView.setVisible(showTerminal);
+			if (showTerminal) {
+				terminalView.layout({ width: terminalPane.clientWidth, height: terminalPane.clientHeight });
+			}
 		};
 		const chatButton = this._appendIconButton(segmented, Codicon.commentDiscussion, localize('swarm.chatAction.chat', "Chat"));
 		const codeButton = this._appendIconButton(segmented, Codicon.code, localize('swarm.chatAction.code', "Code"));

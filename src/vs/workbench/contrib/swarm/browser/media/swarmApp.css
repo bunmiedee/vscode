@@ -916,89 +916,13 @@
 }
 
 .swarm-app .swarm-terminal-view-body {
-	display: flex;
-	flex-direction: column;
-	gap: var(--vscode-spacing-size20);
+	position: relative;
 	flex: 1 1 auto;
 	min-height: 0;
-	overflow: auto;
-	padding: var(--vscode-spacing-size80) var(--vscode-spacing-size100);
-	font-family: var(--monaco-monospace-font);
-	font-size: var(--vscode-fontSize-label3);
-	line-height: 1.5;
+	overflow: hidden;
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
 }
 
-.swarm-app .swarm-terminal-view-line {
-	display: flex;
-	gap: var(--vscode-spacing-size60);
-	white-space: pre-wrap;
-	word-break: break-word;
-}
-
-.swarm-app .swarm-terminal-view-linePrefix {
-	flex: none;
-	width: 1ch;
-	text-align: center;
-	opacity: 0.9;
-}
-
-.swarm-app .swarm-terminal-view-lineText {
-	min-width: 0;
-}
-
-.swarm-app .swarm-terminal-view-line-command {
-	color: var(--vscode-terminal-foreground, var(--vscode-editor-foreground));
-}
-
-.swarm-app .swarm-terminal-view-line-command .swarm-terminal-view-linePrefix {
-	color: var(--vscode-terminal-ansiGreen, var(--vscode-terminal-foreground));
-}
-
-.swarm-app .swarm-terminal-view-line-output {
-	color: var(--vscode-descriptionForeground);
-}
-
-.swarm-app .swarm-terminal-view-line-success {
-	color: var(--vscode-terminal-ansiGreen, var(--vscode-terminal-foreground));
-}
-
-.swarm-app .swarm-terminal-view-line-error {
-	color: var(--vscode-terminal-ansiRed, var(--vscode-terminal-foreground));
-}
-
-.swarm-app .swarm-terminal-view-line-info {
-	color: var(--vscode-terminal-ansiBrightBlack, var(--vscode-descriptionForeground));
-	font-style: italic;
-}
-
-.swarm-app .swarm-terminal-view-promptRow {
-	display: flex;
-	align-items: center;
-	gap: var(--vscode-spacing-size60);
-	flex: none;
-	padding: var(--vscode-spacing-size60) var(--vscode-spacing-size100);
-	border-top: var(--vscode-strokeThickness) solid var(--vscode-terminal-border, var(--vscode-panel-border));
-	font-family: var(--monaco-monospace-font);
-	font-size: var(--vscode-fontSize-label3);
-}
-
-.swarm-app .swarm-terminal-view-promptIcon {
-	flex: none;
-	color: var(--vscode-terminal-ansiGreen, var(--vscode-terminal-foreground));
-	font-size: var(--vscode-codiconFontSize-compact);
-}
-
-.swarm-app .swarm-terminal-view-promptInput {
-	flex: 1 1 auto;
-	min-width: 0;
-	border: 0;
-	background: transparent;
-	color: var(--vscode-terminal-foreground, var(--vscode-editor-foreground));
-	font-family: inherit;
-	font-size: inherit;
-	outline: none;
-}
-
-.swarm-app .swarm-terminal-view-promptInput::placeholder {
-	color: var(--vscode-input-placeholderForeground);
+.swarm-app .swarm-terminal-view-body .terminal-wrapper {
+	height: 100%;
 }

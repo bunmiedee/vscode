@@ -75,32 +75,6 @@ export const enum SwarmReviewVerdict {
 }
 
 /**
- * The kind of a single line in a swarm terminal transcript. Mirrors the
- * vocabulary a shell session produces: a command the user ran, its output, a
- * success/failure marker, or a plain informational line.
- */
-export const enum SwarmTerminalLineType {
-	Command = 'command',
-	Output = 'output',
-	Success = 'success',
-	Error = 'error',
-	Info = 'info',
-}
-
-/** A single line of a swarm terminal transcript. */
-export interface ISwarmTerminalLine {
-	readonly type: SwarmTerminalLineType;
-	readonly text: string;
-}
-
-/** A single terminal tab in a swarm agent window. */
-export interface ISwarmTerminalTab {
-	readonly id: string;
-	readonly title: string;
-	readonly lines: readonly ISwarmTerminalLine[];
-}
-
-/**
  * The view-facing contract of the swarm application, free of DOM types so it
  * can live in the `common` layer. The browser-side {@link ISwarmApp} extends
  * this with the root element.

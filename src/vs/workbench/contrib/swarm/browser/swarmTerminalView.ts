@@ -3,61 +3,54 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { $, addDisposableListener, append, clearNode } from '../../../../base/browser/dom.js';
+import { $, addDisposableListener, append, clearNode, Dimension } from '../../../../base/browser/dom.js';
 import { Codicon } from '../../../../base/common/codicons.js';
 import { Emitter, Event } from '../../../../base/common/event.js';
 import { Disposable, DisposableStore } from '../../../../base/common/lifecycle.js';
 import { ThemeIcon } from '../../../../base/common/themables.js';
-import { generateUuid } from '../../../../base/common/uuid.js';
 import { localize } from '../../../../nls.js';
-import { ISwarmTerminalLine, ISwarmTerminalTab, SwarmTerminalLineType } from '../common/swarm.js';
+import { TerminalLocation } from '../../../../platform/terminal/common/terminal.js';
+import { ITerminalInstance, ITerminalService } from '../../terminal/browser/terminal.js';
 
-/** The payload emitted when the user submits a command from the prompt row. */
-export interface ISwarmTerminalCommand {
-	readonly tabId: string;
-	readonly command: string;
+/** A single terminal tab hosted by the swarm terminal view. */
+interface ISwarmTerminalTab {
+	readonly id: string;
+	readonly title: string;
+	readonly instance: ITerminalInstance;
 }
-
-const LINE_PREFIX: Record<SwarmTerminalLineType, string> = {
-	// allow-any-unicode-next-line
-	[SwarmTerminalLineType.Command]: '❯',
-	[SwarmTerminalLineType.Output]: '',
-	// allow-any-unicode-next-line
-	[SwarmTerminalLineType.Success]: '✓',
-	// allow-any-unicode-next-line
-	[SwarmTerminalLineType.Error]: '✗',
-	[SwarmTerminalLineType.Info]: '',
-};
 
 /**
  * The swarm terminal view.
  *
- * Renders a compact terminal face for an agent window: a tab strip of shell
- * sessions, the active tab's transcript, and a prompt row for running the next
- * command. It mirrors the terminal affordances from the swarm prototype.
+ * Hosts one or more real, pty-backed terminal instances inside an agent window
+ * cell. Each tab owns an {@link ITerminalInstance} created through
+ * {@link ITerminalService} and mounted directly into the view via
+ * `attachToElement`, so the shell lives only inside the swarm cell and never
+ * appears in the Terminal panel.
  *
- * The view is currently UI-only: it renders seed transcripts and keeps its tab
- * state in memory. Wiring it to a real terminal instance is a follow-up.
+ * Instances are created lazily: the first tab is spawned the first time the
+ * terminal face becomes visible, and additional tabs are spawned on demand.
  */
 export class SwarmTerminalView extends Disposable {
 
 	private readonly _element: HTMLElement;
 	private readonly _tabStrip: HTMLElement;
 	private readonly _body: HTMLElement;
-	private readonly _promptInput: HTMLInputElement;
 	private readonly _renderStore = this._register(new DisposableStore());
+	private readonly _instanceStore = this._register(new DisposableStore());
 
-	private readonly _tabs: ISwarmTerminalTab[];
-	private _activeTabId: string;
+	private readonly _tabs: ISwarmTerminalTab[] = [];
+	private _activeTabId: string | undefined;
+	private _visible = false;
+	private _lastDimension: Dimension | undefined;
 
-	private readonly _onDidSubmitCommand = this._register(new Emitter<ISwarmTerminalCommand>());
-	readonly onDidSubmitCommand: Event<ISwarmTerminalCommand> = this._onDidSubmitCommand.event;
+	private readonly _onDidChangeActiveTab = this._register(new Emitter<string>());
+	readonly onDidChangeActiveTab: Event<string> = this._onDidChangeActiveTab.event;
 
-	constructor(tabs: readonly ISwarmTerminalTab[]) {
+	constructor(
+		@ITerminalService private readonly _terminalService: ITerminalService,
+	) {
 		super();
-
-		this._tabs = tabs.length > 0 ? [...tabs] : [{ id: generateUuid(), title: 'zsh', lines: [] }];
-		this._activeTabId = this._tabs[0].id;
 
 		this._element = $('.swarm-terminal-view');
 		this._element.setAttribute('role', 'region');
@@ -66,41 +59,132 @@ export class SwarmTerminalView extends Disposable {
 		this._tabStrip = append(this._element, $('.swarm-terminal-view-tabStrip'));
 		this._body = append(this._element, $('.swarm-terminal-view-body'));
 
-		const promptRow = append(this._element, $('.swarm-terminal-view-promptRow'));
-		const promptIcon = append(promptRow, $('span.swarm-terminal-view-promptIcon'));
-		promptIcon.classList.add(...ThemeIcon.asClassNameArray(Codicon.chevronRight));
-		this._promptInput = append(promptRow, $('input.swarm-terminal-view-promptInput')) as HTMLInputElement;
-		this._promptInput.type = 'text';
-		this._promptInput.placeholder = localize('swarm.terminalView.promptPlaceholder', "Run a command…");
-		this._promptInput.setAttribute('aria-label', localize('swarm.terminalView.promptLabel', "Run a command"));
-		this._renderStore.add(addDisposableListener(this._promptInput, 'keydown', event => {
-			if (event.key === 'Enter') {
-				event.preventDefault();
-				this._submitCommand();
-			}
-		}));
-
-		this._render();
+		this._renderTabStrip();
 	}
 
 	get element(): HTMLElement {
 		return this._element;
 	}
 
-	/** The id of the currently active terminal tab. */
-	get activeTabId(): string {
+	/** The id of the currently active terminal tab, if any. */
+	get activeTabId(): string | undefined {
 		return this._activeTabId;
 	}
 
-	/** Focuses the prompt input so the user can type the next command. */
-	focus(): void {
-		this._promptInput.focus();
+	/**
+	 * Shows or hides the terminal face. The first time the view becomes visible
+	 * the initial shell is spawned; subsequent calls only toggle visibility.
+	 */
+	setVisible(visible: boolean): void {
+		if (this._visible === visible) {
+			return;
+		}
+
+		this._visible = visible;
+		if (visible) {
+			this._ensureActiveTab();
+			this._activeInstance?.setVisible(true);
+			this._layoutActiveInstance();
+		} else {
+			this._activeInstance?.setVisible(false);
+		}
 	}
 
-	private _render(): void {
+	/** Lays the active terminal out to the given dimension. */
+	layout(dimension: Dimension): void {
+		this._lastDimension = dimension;
+		this._layoutActiveInstance();
+	}
+
+	/** Focuses the active terminal instance. */
+	focus(): void {
+		this._activeInstance?.focus();
+	}
+
+	private get _activeInstance(): ITerminalInstance | undefined {
+		return this._tabs.find(tab => tab.id === this._activeTabId)?.instance;
+	}
+
+	private _layoutActiveInstance(): void {
+		if (!this._visible || !this._lastDimension) {
+			return;
+		}
+
+		const instance = this._activeInstance;
+		if (!instance) {
+			return;
+		}
+
+		instance.layout({ width: this._lastDimension.width, height: this._lastDimension.height });
+	}
+
+	/**
+	 * Ensures there is an active tab, spawning the initial shell if needed.
+	 */
+	private _ensureActiveTab(): void {
+		if (this._tabs.length === 0) {
+			void this._createTab();
+			return;
+		}
+
+		if (!this._activeTabId) {
+			this._setActiveTab(this._tabs[0].id);
+		}
+	}
+
+	/**
+	 * Spawns a new pty-backed terminal instance and mounts it into the body.
+	 */
+	private async _createTab(): Promise<void> {
+		const instance = await this._terminalService.createTerminal({
+			location: TerminalLocation.Panel,
+		});
+
+		if (this._store.isDisposed) {
+			instance.dispose();
+			return;
+		}
+
+		this._instanceStore.add(instance);
+
+		const tab: ISwarmTerminalTab = {
+			id: `swarm-terminal-${instance.instanceId}`,
+			title: instance.title || localize('swarm.terminalView.defaultTitle', "Terminal"),
+			instance,
+		};
+		this._tabs.push(tab);
+
+		this._instanceStore.add(instance.onTitleChanged(() => this._renderTabStrip()));
+
+		this._setActiveTab(tab.id);
+	}
+
+	private _setActiveTab(tabId: string): void {
+		if (this._activeTabId === tabId) {
+			return;
+		}
+
+		const previous = this._activeInstance;
+		if (previous) {
+			previous.detachFromElement();
+			previous.setVisible(false);
+		}
+
+		this._activeTabId = tabId;
+		const tab = this._tabs.find(candidate => candidate.id === tabId);
+		if (tab) {
+			tab.instance.attachToElement(this._body);
+			tab.instance.setVisible(this._visible);
+			this._layoutActiveInstance();
+		}
+
+		this._renderTabStrip();
+		this._onDidChangeActiveTab.fire(tabId);
+	}
+
+	private _renderTabStrip(): void {
 		this._renderStore.clear();
 		clearNode(this._tabStrip);
-		clearNode(this._body);
 
 		for (const tab of this._tabs) {
 			const isActive = tab.id === this._activeTabId;
@@ -121,41 +205,6 @@ export class SwarmTerminalView extends Disposable {
 		addButton.setAttribute('aria-label', localize('swarm.terminalView.newTab', "New Terminal"));
 		const addIcon = append(addButton, $('span.swarm-terminal-view-addTabIcon'));
 		addIcon.classList.add(...ThemeIcon.asClassNameArray(Codicon.add));
-
-		const activeTab = this._tabs.find(tab => tab.id === this._activeTabId) ?? this._tabs[0];
-		for (const line of activeTab.lines) {
-			this._appendLine(line);
-		}
-	}
-
-	private _appendLine(line: ISwarmTerminalLine): void {
-		const row = append(this._body, $('.swarm-terminal-view-line'));
-		row.classList.add(`swarm-terminal-view-line-${line.type}`);
-		const prefix = LINE_PREFIX[line.type];
-		if (prefix) {
-			const prefixElement = append(row, $('span.swarm-terminal-view-linePrefix'));
-			prefixElement.textContent = prefix;
-		}
-		const text = append(row, $('span.swarm-terminal-view-lineText'));
-		text.textContent = line.text;
-	}
-
-	private _setActiveTab(tabId: string): void {
-		if (this._activeTabId === tabId) {
-			return;
-		}
-
-		this._activeTabId = tabId;
-		this._render();
-	}
-
-	private _submitCommand(): void {
-		const command = this._promptInput.value.trim();
-		if (!command) {
-			return;
-		}
-
-		this._promptInput.value = '';
-		this._onDidSubmitCommand.fire({ tabId: this._activeTabId, command });
+		this._renderStore.add(addDisposableListener(addButton, 'click', () => void this._createTab()));
 	}
 }
