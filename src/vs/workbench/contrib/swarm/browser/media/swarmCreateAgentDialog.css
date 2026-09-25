@@ -1,0 +1,444 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* ---------- Create agent dialog ---------- */
+
+.swarm-create-agent-overlay {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100;
+}
+
+.swarm-create-agent-backdrop {
+	position: absolute;
+	inset: 0;
+	background: color-mix(in srgb, var(--vscode-editor-background) 55%, transparent);
+}
+
+.swarm-create-agent-dialog {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: min(560px, calc(100% - var(--vscode-spacing-size320)));
+	max-height: calc(100% - var(--vscode-spacing-size320));
+	border: var(--vscode-strokeThickness) solid var(--vscode-widget-border, var(--vscode-panel-border));
+	border-radius: var(--vscode-cornerRadius-large);
+	background: var(--vscode-editorWidget-background);
+	color: var(--vscode-editorWidget-foreground);
+	box-shadow: 0 8px 32px var(--vscode-widget-shadow);
+	overflow: hidden;
+}
+
+.swarm-create-agent-header {
+	display: flex;
+	align-items: flex-start;
+	justify-content: space-between;
+	gap: var(--vscode-spacing-size80);
+	padding: var(--vscode-spacing-size160) var(--vscode-spacing-size160) var(--vscode-spacing-size120);
+}
+
+.swarm-create-agent-heading {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size20);
+	min-width: 0;
+}
+
+.swarm-create-agent-eyebrow {
+	font-size: var(--vscode-fontSize-label3);
+	font-weight: var(--vscode-fontWeight-semiBold);
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-create-agent-title {
+	margin: 0;
+	font-size: var(--vscode-fontSize-heading2);
+	font-weight: var(--vscode-fontWeight-semiBold);
+	color: var(--vscode-foreground);
+}
+
+.swarm-create-agent-subtitle {
+	margin: 0;
+	font-size: var(--vscode-fontSize-body1);
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-create-agent-close {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 24px;
+	height: 24px;
+	padding: 0;
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-icon-foreground);
+}
+
+.swarm-create-agent-close:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}
+
+.swarm-create-agent-body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size120);
+	padding: 0 var(--vscode-spacing-size160) var(--vscode-spacing-size160);
+	overflow: auto;
+}
+
+.swarm-create-agent-section {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size60);
+}
+
+.swarm-create-agent-sectionLabelRow {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--vscode-spacing-size80);
+}
+
+.swarm-create-agent-sectionLabel {
+	font-size: var(--vscode-fontSize-label3);
+	font-weight: var(--vscode-fontWeight-semiBold);
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-create-agent-fieldRow {
+	display: flex;
+	gap: var(--vscode-spacing-size80);
+	min-width: 0;
+}
+
+.swarm-create-agent-field {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size40);
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+.swarm-create-agent-fieldLabel {
+	font-size: var(--vscode-fontSize-label2);
+	color: var(--vscode-foreground);
+}
+
+.swarm-create-agent-nameInput,
+.swarm-create-agent-select {
+	width: 100%;
+	height: 28px;
+	padding: 0 var(--vscode-spacing-size60);
+	border: var(--vscode-strokeThickness) solid var(--vscode-input-border, transparent);
+	border-radius: var(--vscode-cornerRadius-small);
+	background: var(--vscode-input-background);
+	color: var(--vscode-input-foreground);
+	font-size: var(--vscode-fontSize-body1);
+	font-family: inherit;
+}
+
+.swarm-create-agent-nameInput::placeholder {
+	color: var(--vscode-input-placeholderForeground);
+}
+
+.swarm-create-agent-nameInput:focus,
+.swarm-create-agent-select:focus {
+	outline: var(--vscode-strokeThickness) solid var(--vscode-focusBorder);
+	outline-offset: -1px;
+}
+
+.swarm-create-agent-select:disabled,
+.swarm-create-agent-inputWithIcon input:disabled {
+	opacity: 0.5;
+}
+
+.swarm-create-agent-inputWithIcon {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.swarm-create-agent-inputWithIcon .swarm-create-agent-inputIcon {
+	position: absolute;
+	left: var(--vscode-spacing-size60);
+	pointer-events: none;
+	color: var(--vscode-icon-foreground);
+}
+
+.swarm-create-agent-inputWithIcon input {
+	width: 100%;
+	height: 28px;
+	padding: 0 var(--vscode-spacing-size60) 0 var(--vscode-spacing-size200);
+	border: var(--vscode-strokeThickness) solid var(--vscode-input-border, transparent);
+	border-radius: var(--vscode-cornerRadius-small);
+	background: var(--vscode-input-background);
+	color: var(--vscode-input-foreground);
+	font-size: var(--vscode-fontSize-body1);
+	font-family: inherit;
+}
+
+.swarm-create-agent-inputWithIcon input:focus {
+	outline: var(--vscode-strokeThickness) solid var(--vscode-focusBorder);
+	outline-offset: -1px;
+}
+
+.swarm-create-agent-linkButton {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size40);
+	padding: var(--vscode-spacing-size20) var(--vscode-spacing-size40);
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-textLink-foreground);
+	font-size: var(--vscode-fontSize-label2);
+}
+
+.swarm-create-agent-linkButton:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}
+
+.swarm-create-agent-repoCard {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size80);
+	padding: var(--vscode-spacing-size80) var(--vscode-spacing-size100);
+	border: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	border-radius: var(--vscode-cornerRadius-medium);
+	background: color-mix(in srgb, var(--vscode-sideBar-background) 60%, transparent);
+}
+
+.swarm-create-agent-repoIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	width: 28px;
+	height: 28px;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 40%, transparent);
+	color: var(--vscode-icon-foreground);
+}
+
+.swarm-create-agent-repoInfo {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size20);
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.swarm-create-agent-repoName {
+	font-size: var(--vscode-fontSize-body1);
+	font-weight: var(--vscode-fontWeight-semiBold);
+	color: var(--vscode-foreground);
+}
+
+.swarm-create-agent-repoPath {
+	font-size: var(--vscode-fontSize-label2);
+	color: var(--vscode-descriptionForeground);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.swarm-create-agent-repoOwner {
+	flex: none;
+	padding: var(--vscode-spacing-size20) var(--vscode-spacing-size60);
+	border-radius: var(--vscode-cornerRadius-small);
+	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 30%, transparent);
+	font-size: var(--vscode-fontSize-label3);
+	color: var(--vscode-descriptionForeground);
+	white-space: nowrap;
+}
+
+.swarm-create-agent-card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size80);
+	padding: var(--vscode-spacing-size100) var(--vscode-spacing-size120);
+	border: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	border-radius: var(--vscode-cornerRadius-medium);
+	background: color-mix(in srgb, var(--vscode-sideBar-background) 40%, transparent);
+}
+
+.swarm-create-agent-cardHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size60);
+}
+
+.swarm-create-agent-cardIcon {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	color: var(--vscode-icon-foreground);
+}
+
+.swarm-create-agent-cardHeaderText {
+	display: flex;
+	flex-direction: column;
+	gap: var(--vscode-spacing-size20);
+	flex: 1 1 auto;
+	min-width: 0;
+}
+
+.swarm-create-agent-cardTitle {
+	font-size: var(--vscode-fontSize-body1);
+	font-weight: var(--vscode-fontWeight-semiBold);
+	color: var(--vscode-foreground);
+}
+
+.swarm-create-agent-cardSubtitle {
+	font-size: var(--vscode-fontSize-label2);
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-create-agent-divider {
+	height: var(--vscode-strokeThickness);
+	background: var(--vscode-panel-border);
+}
+
+.swarm-create-agent-checkbox {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size40);
+	font-size: var(--vscode-fontSize-label2);
+	color: var(--vscode-foreground);
+	white-space: nowrap;
+}
+
+.swarm-create-agent-checkbox input {
+	margin: 0;
+	accent-color: var(--vscode-checkbox-selectBackground);
+}
+
+.swarm-create-agent-worktreeRow {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size40);
+	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
+	border-radius: var(--vscode-cornerRadius-small);
+	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 18%, transparent);
+	font-size: var(--vscode-fontSize-label2);
+}
+
+.swarm-create-agent-worktreeRow .swarm-create-agent-inputIcon {
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-create-agent-worktreeLabel {
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-create-agent-worktreeValue {
+	font-family: var(--monaco-monospace-font);
+	color: var(--vscode-foreground);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.swarm-create-agent-advanced {
+	padding: 0;
+}
+
+.swarm-create-agent-advancedHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size60);
+	width: 100%;
+	padding: var(--vscode-spacing-size100) var(--vscode-spacing-size120);
+	border: 0;
+	background: transparent;
+	color: inherit;
+	text-align: left;
+}
+
+.swarm-create-agent-advancedHeader:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}
+
+.swarm-create-agent-advancedChevron {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: none;
+	color: var(--vscode-icon-foreground);
+}
+
+.swarm-create-agent-advancedContent {
+	padding: 0 var(--vscode-spacing-size120) var(--vscode-spacing-size100);
+}
+
+.swarm-create-agent-advancedPlaceholder {
+	margin: 0;
+	font-size: var(--vscode-fontSize-label2);
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-create-agent-footer {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--vscode-spacing-size80);
+	padding: var(--vscode-spacing-size120) var(--vscode-spacing-size160);
+	border-top: var(--vscode-strokeThickness) solid var(--vscode-panel-border);
+	background: color-mix(in srgb, var(--vscode-sideBar-background) 40%, transparent);
+}
+
+.swarm-create-agent-footerHint {
+	font-size: var(--vscode-fontSize-label2);
+	color: var(--vscode-descriptionForeground);
+}
+
+.swarm-create-agent-footerActions {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size60);
+	flex: none;
+}
+
+.swarm-create-agent-button {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size40);
+	height: 28px;
+	padding: 0 var(--vscode-spacing-size100);
+	border: var(--vscode-strokeThickness) solid transparent;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-foreground);
+	font-size: var(--vscode-fontSize-body1);
+	font-family: inherit;
+}
+
+.swarm-create-agent-button:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}
+
+.swarm-create-agent-buttonPrimary {
+	background: var(--vscode-button-background);
+	color: var(--vscode-button-foreground);
+}
+
+.swarm-create-agent-buttonPrimary:hover {
+	background: var(--vscode-button-hoverBackground);
+}
+
+.swarm-create-agent-icon {
+	font-size: var(--vscode-codiconFontSize);
+}

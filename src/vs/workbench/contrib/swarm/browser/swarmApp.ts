@@ -8,7 +8,7 @@ import { $, addDisposableListener, append, clearNode, getActiveElement, getWindo
 import { CancellationToken } from '../../../../base/common/cancellation.js';
 import { ThemeIcon } from '../../../../base/common/themables.js';
 import { Emitter, Event } from '../../../../base/common/event.js';
-import { Disposable, DisposableStore, toDisposable } from '../../../../base/common/lifecycle.js';
+import { Disposable, DisposableStore, IDisposable, MutableDisposable, toDisposable } from '../../../../base/common/lifecycle.js';
 import { Codicon } from '../../../../base/common/codicons.js';
 import { localize } from '../../../../nls.js';
 import { IAgentHostEnablementService } from '../../../../platform/agentHost/common/agentHostEnablementService.js';
@@ -28,6 +28,7 @@ import { ChatWidget } from '../../chat/browser/widget/chatWidget.js';
 import { ISwarmActivityItem, ISwarmAppInfo, SwarmView } from '../common/swarm.js';
 import { SwarmCodeView } from './swarmCodeView.js';
 import { getSeedDiffsForPreset } from './swarmCodeViewData.js';
+import { ISwarmCreateAgentResult, showSwarmCreateAgentDialog } from './swarmCreateAgentDialog.js';
 
 interface ISwarmChatCell {
 	readonly container: HTMLElement;
@@ -72,6 +73,7 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 	private readonly _element: HTMLElement;
 	private readonly _chatCells = this._register(new DisposableStore());
 	private readonly _renderedCells: ISwarmChatCell[] = [];
+	private readonly _createAgentDialog = this._register(new MutableDisposable<IDisposable>());
 	private _grid: HTMLElement | undefined;
 
 	private _activeView: SwarmView = SwarmView.Agents;
@@ -170,13 +172,55 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 	 * existing ones and the grid is re-laid out so it takes its place.
 	 */
 	addChat(): void {
+		this.showCreateAgentDialog();
+	}
+
+	/**
+	 * Surfaces the "Create agent" dialog. On confirm, a new agent chat cell is
+	 * appended to the grid using the collected configuration.
+	 */
+	showCreateAgentDialog(): void {
+		if (this._createAgentDialog.value) {
+			return;
+		}
+
+		const preset = SWARM_CHAT_PRESETS[this._renderedCells.length % SWARM_CHAT_PRESETS.length];
+		const dialog = showSwarmCreateAgentDialog(
+			this._element,
+			{
+				models: [],
+				branches: [],
+				repository: {
+					name: preset.repository,
+					path: '~/projects/fridays-runtime',
+					owner: 'bunmiedee/fridays-runtime',
+				},
+			},
+			result => this._addChatFromResult(result),
+		);
+		// Clear the holder once the dialog is dismissed so it can be reopened.
+		this._createAgentDialog.value = dialog;
+		dialog.add(toDisposable(() => {
+			if (this._createAgentDialog.value === dialog) {
+				this._createAgentDialog.clearAndLeak();
+			}
+		}));
+	}
+
+	private _addChatFromResult(result: ISwarmCreateAgentResult): void {
 		const grid = this._grid;
 		if (!grid) {
 			return;
 		}
 
 		const preset = SWARM_CHAT_PRESETS[this._renderedCells.length % SWARM_CHAT_PRESETS.length];
-		this._appendChatCell(grid, preset);
+		const nextPreset: ISwarmChatWindowPreset = {
+			...preset,
+			title: result.name || preset.title,
+			repository: result.repository.name,
+			branch: result.createBranch && result.branchName ? result.branchName : preset.branch,
+		};
+		this._appendChatCell(grid, nextPreset);
 		this._layoutChatCells();
 	}
 
