@@ -151,6 +151,13 @@ export const TitleBarStyleContext = new RawContextKey<string>('titleBarStyle', '
 export const TitleBarVisibleContext = new RawContextKey<boolean>('titleBarVisible', false, localize('titleBarVisible', "Whether the title bar is visible"));
 export const IsCompactTitleBarContext = new RawContextKey<boolean>('isCompactTitleBar', false, localize('isCompactTitleBar', "Title bar is in compact mode"));
 
+/**
+ * True while the swarm (agent grid) surface is showing. Bound by the swarm
+ * workbench outlet so that other workbench parts — most notably the title bar —
+ * can adapt their chrome to swarm mode without importing swarm internals.
+ */
+export const SwarmModeActiveContext = new RawContextKey<boolean>('swarmModeActive', false, localize('swarmModeActive', "Whether the swarm agent grid surface is showing"));
+
 //#endregion
 
 

@@ -18,12 +18,12 @@
 	display: grid;
 	flex: 1 1 auto;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
-	grid-template-rows: repeat(2, minmax(0, 1fr));
+	grid-auto-rows: minmax(0, 1fr);
 	gap: var(--vscode-spacing-size120);
 	min-width: 0;
 	min-height: 0;
 	padding: var(--vscode-spacing-size160);
-	overflow: hidden;
+	overflow: auto;
 }
 
 .swarm-app .swarm-agent-grid-cell {

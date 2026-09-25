@@ -9,9 +9,11 @@ import { mainWindow } from '../../../../base/browser/window.js';
 import { Disposable } from '../../../../base/common/lifecycle.js';
 import { ThemeIcon } from '../../../../base/common/themables.js';
 import { localize } from '../../../../nls.js';
+import { IContextKey, IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';
 import { IInstantiationService } from '../../../../platform/instantiation/common/instantiation.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { IWorkbenchLayoutService, Parts } from '../../../services/layout/browser/layoutService.js';
+import { SwarmModeActiveContext } from '../../../common/contextkeys.js';
 import { SwarmApp } from './swarmApp.js';
 
 /**
@@ -30,6 +32,7 @@ export class AgentGridModePart extends Disposable {
 
 	private readonly _element: HTMLElement;
 	private readonly _swarmApp: SwarmApp;
+	private readonly _swarmModeActive: IContextKey<boolean>;
 	private _visible = false;
 	private readonly _activityBarLabelClasses = new WeakMap<HTMLElement, string>();
 	private _wasSidebarVisible = false;
@@ -39,8 +42,11 @@ export class AgentGridModePart extends Disposable {
 		@IInstantiationService instantiationService: IInstantiationService,
 		@ILogService private readonly logService: ILogService,
 		@IWorkbenchLayoutService private readonly layoutService: IWorkbenchLayoutService,
+		@IContextKeyService contextKeyService: IContextKeyService,
 	) {
 		super();
+
+		this._swarmModeActive = SwarmModeActiveContext.bindTo(contextKeyService);
 
 		this._element = $('.agent-grid-mode-surface');
 		this._element.setAttribute('role', 'region');
@@ -65,6 +71,11 @@ export class AgentGridModePart extends Disposable {
 		return this._element;
 	}
 
+	/** The swarm application hosted by this part. */
+	get swarmApp(): SwarmApp {
+		return this._swarmApp;
+	}
+
 	isVisible(): boolean {
 		return this._visible;
 	}
@@ -78,6 +89,7 @@ export class AgentGridModePart extends Disposable {
 		this._element.classList.toggle('visible', visible);
 		this._element.setAttribute('aria-hidden', String(!visible));
 		this.layoutService.mainContainer.classList.toggle('agent-grid-mode-active', visible);
+		this._swarmModeActive.set(visible);
 		this._updateWorkbenchPartsVisibility(visible);
 		this._updateActivityBarIcons(visible);
 		this.logService.info('[AgentGridMode] part visibility set', { visible, className: this._element.className });
@@ -85,7 +97,7 @@ export class AgentGridModePart extends Disposable {
 
 	private _mount(): void {
 		const editorContent = this.layoutService.getContainer(mainWindow, Parts.EDITOR_PART)?.firstElementChild;
-		if (!editorContent) {
+		if (!isHTMLElement(editorContent)) {
 			return;
 		}
 
@@ -103,7 +115,7 @@ export class AgentGridModePart extends Disposable {
 
 	private _updateActivityBarIcons(visible: boolean): void {
 		const activityBarContent = this.layoutService.getContainer(mainWindow, Parts.ACTIVITYBAR_PART)?.firstElementChild;
-		if (!activityBarContent) {
+		if (!isHTMLElement(activityBarContent)) {
 			return;
 		}
 
@@ -140,8 +152,8 @@ export class AgentGridModePart extends Disposable {
 		const bars = Array.from(container.children).filter((child): child is HTMLElement => isHTMLElement(child));
 
 		for (const bar of skipFirst ? bars.slice(1) : bars.slice(0, 1)) {
-			for (const actionBar of bar.children) {
-				for (const actionItem of actionBar.children) {
+			for (const actionBar of Array.from(bar.children)) {
+				for (const actionItem of Array.from(actionBar.children)) {
 					if (isHTMLElement(actionItem) && actionItem.classList.contains('action-label')) {
 						labels.push(actionItem);
 					}

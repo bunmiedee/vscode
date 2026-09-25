@@ -26,7 +26,7 @@ export interface ISwarmReviewSubmission {
 }
 
 interface IFileStatusMeta {
-	readonly icon: Codicon;
+	readonly icon: typeof Codicon.diffModified;
 	readonly className: string;
 }
 
@@ -86,11 +86,11 @@ export class SwarmCodeView extends Disposable {
 
 	constructor(
 		private readonly _diffs: readonly ISwarmFileDiff[],
-		private readonly _options: { readonly editable?: boolean } = {},
+		options: { readonly editable?: boolean } = {},
 	) {
 		super();
 
-		this._editable = Boolean(_options.editable);
+		this._editable = Boolean(options.editable);
 
 		this._element = $('.swarm-code-view');
 		this._element.setAttribute('role', 'region');

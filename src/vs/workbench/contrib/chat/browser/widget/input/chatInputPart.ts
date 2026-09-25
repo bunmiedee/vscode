@@ -1552,7 +1552,7 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 	 * {@link setPermissionLevel} can drive it. Shared by the secondary toolbar
 	 * (default composer) and the textfield toolbar (swarm composer).
 	 */
-	private _createPermissionPicker(action: MenuItemAction, options: IActionViewItemOptions | undefined): PermissionPickerActionItem {
+	private _createPermissionPicker(action: MenuItemAction, options: IChatInputPickerOptions): PermissionPickerActionItem {
 		const delegate: IPermissionPickerDelegate = {
 			currentPermissionLevel: this._currentPermissionLevel,
 			setPermissionLevel: (level: ChatPermissionLevel) => {

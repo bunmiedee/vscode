@@ -5,7 +5,7 @@
 
 import type { Terminal } from '@xterm/xterm';
 import { deepStrictEqual, ok } from 'assert';
-import { SinonFakeTimersConfig, useFakeTimers } from 'sinon';
+import { useFakeTimers } from 'sinon';
 import { importAMDNodeModule } from '../../../../../../amdX.js';
 import { $, getWindow } from '../../../../../../base/browser/dom.js';
 import { Orientation, SplitView } from '../../../../../../base/browser/ui/splitview/splitview.js';
@@ -94,7 +94,7 @@ suite('TerminalStickyScrollOverlay', () => {
 		getWindow(root).document.body.appendChild(root);
 		store.add(toDisposable(() => root.remove()));
 
-		const clockOptions: Partial<SinonFakeTimersConfig> & { shouldClearNativeTimers: boolean } = {
+		const clockOptions: Partial<Parameters<typeof useFakeTimers>[0]> & { shouldClearNativeTimers: boolean } = {
 			toFake: ['setTimeout', 'clearTimeout'],
 			shouldClearNativeTimers: true
 		};

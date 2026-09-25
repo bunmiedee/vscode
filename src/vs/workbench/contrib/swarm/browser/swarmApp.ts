@@ -72,6 +72,7 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 	private readonly _element: HTMLElement;
 	private readonly _chatCells = this._register(new DisposableStore());
 	private readonly _renderedCells: ISwarmChatCell[] = [];
+	private _grid: HTMLElement | undefined;
 
 	private _activeView: SwarmView = SwarmView.Agents;
 
@@ -131,25 +132,51 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 
 		const grid = append(this._element, $('main.swarm-agent-grid'));
 		grid.setAttribute('aria-label', localize('swarm.gridLabel', "Agent chat grid"));
+		this._grid = grid;
 
 		for (let index = 0; index < 4; index++) {
 			const preset = SWARM_CHAT_PRESETS[index % SWARM_CHAT_PRESETS.length];
-			const cell = append(grid, $('section.swarm-agent-grid-cell'));
-			cell.setAttribute('role', 'group');
-			cell.setAttribute('aria-label', localize('swarm.cellLabel', "Agent Chat {0}: {1}", index + 1, preset.title));
-
-			const viewPane = append(cell, $('.swarm-chat-viewpane.chat-viewpane'));
-			const controlsWrapper = append(viewPane, $('.voice-agent-controls-wrapper'));
-			const widgetHost = append(controlsWrapper, $('.chat-controls-container.swarm-agent-grid-chatWidget'));
-			const codeViewHost = append(viewPane, $('.swarm-code-view-host'));
-			this._renderChatWindowChrome(viewPane, preset, controlsWrapper, codeViewHost);
-			this._createChatCell(widgetHost);
-			this._createCodeView(codeViewHost, preset);
+			this._appendChatCell(grid, preset);
 		}
 
 		const resizeObserver = new (getWindow(this._element).ResizeObserver)(() => this._layoutChatCells());
 		resizeObserver.observe(grid);
 		this._chatCells.add(toDisposable(() => resizeObserver.disconnect()));
+		this._layoutChatCells();
+	}
+
+	/**
+	 * Appends a single agent chat cell (chrome + chat widget + code view) to the
+	 * grid. Shared by the initial render and {@link addChat} so a newly added
+	 * chat is indistinguishable from the seeded ones.
+	 */
+	private _appendChatCell(grid: HTMLElement, preset: ISwarmChatWindowPreset): void {
+		const index = this._renderedCells.length;
+		const cell = append(grid, $('section.swarm-agent-grid-cell'));
+		cell.setAttribute('role', 'group');
+		cell.setAttribute('aria-label', localize('swarm.cellLabel', "Agent Chat {0}: {1}", index + 1, preset.title));
+
+		const viewPane = append(cell, $('.swarm-chat-viewpane.chat-viewpane'));
+		const controlsWrapper = append(viewPane, $('.voice-agent-controls-wrapper'));
+		const widgetHost = append(controlsWrapper, $('.chat-controls-container.swarm-agent-grid-chatWidget'));
+		const codeViewHost = append(viewPane, $('.swarm-code-view-host'));
+		this._renderChatWindowChrome(viewPane, preset, controlsWrapper, codeViewHost);
+		this._createChatCell(widgetHost);
+		this._createCodeView(codeViewHost, preset);
+	}
+
+	/**
+	 * Adds a new agent chat to the grid. The new cell is appended after the
+	 * existing ones and the grid is re-laid out so it takes its place.
+	 */
+	addChat(): void {
+		const grid = this._grid;
+		if (!grid) {
+			return;
+		}
+
+		const preset = SWARM_CHAT_PRESETS[this._renderedCells.length % SWARM_CHAT_PRESETS.length];
+		this._appendChatCell(grid, preset);
 		this._layoutChatCells();
 	}
 
@@ -324,7 +351,7 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 		checkboxLabel.textContent = localize('swarm.autoCommit', "auto-commit");
 	}
 
-	private _appendContextPill(container: HTMLElement, icon: Codicon, label: string): void {
+	private _appendContextPill(container: HTMLElement, icon: typeof Codicon.repo, label: string): void {
 		const pill = append(container, $('.swarm-chat-window-pill'));
 		this._appendIcon(pill, icon);
 		const text = append(pill, $('span'));
@@ -332,7 +359,7 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 		this._appendIcon(pill, Codicon.chevronDown);
 	}
 
-	private _appendIconButton(container: HTMLElement, icon: Codicon, ariaLabel: string): HTMLButtonElement {
+	private _appendIconButton(container: HTMLElement, icon: typeof Codicon.repo, ariaLabel: string): HTMLButtonElement {
 		const button = append(container, $('button.swarm-chat-window-iconButton')) as HTMLButtonElement;
 		button.type = 'button';
 		button.setAttribute('aria-label', ariaLabel);
@@ -340,7 +367,7 @@ export class SwarmApp extends Disposable implements ISwarmAppInfo {
 		return button;
 	}
 
-	private _appendIcon(container: HTMLElement, icon: Codicon): void {
+	private _appendIcon(container: HTMLElement, icon: typeof Codicon.repo): void {
 		const iconElement = append(container, $('span.swarm-chat-window-icon'));
 		iconElement.classList.add(...ThemeIcon.asClassNameArray(icon));
 	}

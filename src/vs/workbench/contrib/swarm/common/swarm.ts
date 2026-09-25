@@ -92,4 +92,7 @@ export interface ISwarmAppInfo extends IDisposable {
 
 	/** Switch the swarm app to the given view. */
 	setActiveView(view: SwarmView): void;
+
+	/** Add a new agent chat to the swarm grid. */
+	addChat(): void;
 }
