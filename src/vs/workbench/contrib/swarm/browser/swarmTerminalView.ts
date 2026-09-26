@@ -9,8 +9,19 @@ import { Emitter, Event } from '../../../../base/common/event.js';
 import { Disposable, DisposableStore } from '../../../../base/common/lifecycle.js';
 import { ThemeIcon } from '../../../../base/common/themables.js';
 import { localize } from '../../../../nls.js';
+import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { TerminalLocation } from '../../../../platform/terminal/common/terminal.js';
 import { ITerminalInstance, ITerminalService } from '../../terminal/browser/terminal.js';
+
+/**
+ * The starting font size (in pixels) used by the swarm terminal face.
+ *
+ * The swarm cells are much smaller than a full terminal panel, so the global
+ * `terminal.integrated.fontSize` reads as oversized. This override is applied
+ * per instance and re-applied whenever the terminal configuration changes,
+ * since the terminal instance re-reads the configured font size on resize.
+ */
+const SWARM_TERMINAL_FONT_SIZE = 10;
 
 /** The payload emitted when the user asks to maximize the terminal face. */
 export interface ISwarmTerminalMaximizeEvent {
@@ -57,8 +68,17 @@ export class SwarmTerminalView extends Disposable {
 
 	constructor(
 		@ITerminalService private readonly _terminalService: ITerminalService,
+		@IConfigurationService private readonly _configurationService: IConfigurationService,
 	) {
 		super();
+
+		// The terminal instance re-reads `terminal.integrated.fontSize` on resize, so re-apply
+		// the swarm override whenever the terminal configuration changes.
+		this._register(this._configurationService.onDidChangeConfiguration(e => {
+			if (e.affectsConfiguration('terminal.integrated')) {
+				this._layoutActiveInstance();
+			}
+		}));
 
 		this._element = $('.swarm-terminal-view');
 		this._element.setAttribute('role', 'region');
@@ -124,6 +144,11 @@ export class SwarmTerminalView extends Disposable {
 		}
 
 		instance.layout({ width: this._lastDimension.width, height: this._lastDimension.height });
+
+		// The instance re-applies the configured font size during layout, so the swarm
+		// override must be applied afterwards to win. This also covers config changes,
+		// which mark the instance's layout settings dirty and re-read the font size.
+		void this._applyFontSize(instance);
 	}
 
 	/**
@@ -165,6 +190,25 @@ export class SwarmTerminalView extends Disposable {
 		this._instanceStore.add(instance.onTitleChanged(() => this._renderTabStrip()));
 
 		this._setActiveTab(tab.id);
+	}
+
+	/**
+	 * Applies the swarm terminal font size override to an instance once its
+	 * xterm.js instance is ready, then re-measures the character grid so the
+	 * terminal reflows against the smaller font.
+	 */
+	private async _applyFontSize(instance: ITerminalInstance): Promise<void> {
+		const xterm = await instance.xtermReadyPromise;
+		if (!xterm || instance.isDisposed) {
+			return;
+		}
+
+		if (xterm.raw.options.fontSize === SWARM_TERMINAL_FONT_SIZE) {
+			return;
+		}
+
+		xterm.raw.options.fontSize = SWARM_TERMINAL_FONT_SIZE;
+		xterm.raw.refresh(0, xterm.raw.rows - 1);
 	}
 
 	private _setActiveTab(tabId: string): void {
