@@ -858,7 +858,14 @@
 	flex: none;
 	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
 	border-bottom: var(--vscode-strokeThickness) solid var(--vscode-terminal-border, var(--vscode-panel-border));
-	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 22%, transparent);
+	background: color-mix(in srgb, var(--vscode-foreground) 6%, transparent);
+}
+
+.swarm-app .swarm-terminal-view-tabs {
+	display: flex;
+	align-items: center;
+	gap: var(--vscode-spacing-size20);
+	min-width: 0;
 }
 
 .swarm-app .swarm-terminal-view-tab {
@@ -881,7 +888,7 @@
 }
 
 .swarm-app .swarm-terminal-view-tab-active {
-	background: color-mix(in srgb, var(--vscode-toolbar-hoverBackground) 60%, transparent);
+	background: color-mix(in srgb, var(--vscode-foreground) 14%, transparent);
 	color: var(--vscode-foreground);
 }
 
@@ -915,12 +922,33 @@
 	font-size: var(--vscode-codiconFontSize-compact);
 }
 
+.swarm-app .swarm-terminal-view-maximize {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 24px;
+	height: 24px;
+	margin-left: auto;
+	border: 0;
+	border-radius: var(--vscode-cornerRadius-small);
+	background: transparent;
+	color: var(--vscode-icon-foreground);
+	cursor: pointer;
+}
+
+.swarm-app .swarm-terminal-view-maximize:hover {
+	background: var(--vscode-toolbar-hoverBackground);
+}
+
+.swarm-app .swarm-terminal-view-maximizeIcon {
+	font-size: var(--vscode-codiconFontSize-compact);
+}
+
 .swarm-app .swarm-terminal-view-body {
 	position: relative;
 	flex: 1 1 auto;
 	min-height: 0;
 	overflow: hidden;
-	padding: var(--vscode-spacing-size40) var(--vscode-spacing-size60);
 }
 
 .swarm-app .swarm-terminal-view-body .terminal-wrapper {

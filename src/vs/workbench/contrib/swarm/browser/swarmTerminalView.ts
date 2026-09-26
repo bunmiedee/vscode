@@ -12,6 +12,11 @@ import { localize } from '../../../../nls.js';
 import { TerminalLocation } from '../../../../platform/terminal/common/terminal.js';
 import { ITerminalInstance, ITerminalService } from '../../terminal/browser/terminal.js';
 
+/** The payload emitted when the user asks to maximize the terminal face. */
+export interface ISwarmTerminalMaximizeEvent {
+	readonly tabId: string | undefined;
+}
+
 /** A single terminal tab hosted by the swarm terminal view. */
 interface ISwarmTerminalTab {
 	readonly id: string;
@@ -46,6 +51,9 @@ export class SwarmTerminalView extends Disposable {
 
 	private readonly _onDidChangeActiveTab = this._register(new Emitter<string>());
 	readonly onDidChangeActiveTab: Event<string> = this._onDidChangeActiveTab.event;
+
+	private readonly _onDidRequestMaximize = this._register(new Emitter<ISwarmTerminalMaximizeEvent>());
+	readonly onDidRequestMaximize: Event<ISwarmTerminalMaximizeEvent> = this._onDidRequestMaximize.event;
 
 	constructor(
 		@ITerminalService private readonly _terminalService: ITerminalService,
@@ -186,9 +194,10 @@ export class SwarmTerminalView extends Disposable {
 		this._renderStore.clear();
 		clearNode(this._tabStrip);
 
+		const tabs = append(this._tabStrip, $('.swarm-terminal-view-tabs'));
 		for (const tab of this._tabs) {
 			const isActive = tab.id === this._activeTabId;
-			const button = append(this._tabStrip, $('button.swarm-terminal-view-tab')) as HTMLButtonElement;
+			const button = append(tabs, $('button.swarm-terminal-view-tab')) as HTMLButtonElement;
 			button.type = 'button';
 			button.classList.toggle('swarm-terminal-view-tab-active', isActive);
 			button.setAttribute('aria-pressed', String(isActive));
@@ -200,11 +209,18 @@ export class SwarmTerminalView extends Disposable {
 			this._renderStore.add(addDisposableListener(button, 'click', () => this._setActiveTab(tab.id)));
 		}
 
-		const addButton = append(this._tabStrip, $('button.swarm-terminal-view-addTab')) as HTMLButtonElement;
+		const addButton = append(tabs, $('button.swarm-terminal-view-addTab')) as HTMLButtonElement;
 		addButton.type = 'button';
 		addButton.setAttribute('aria-label', localize('swarm.terminalView.newTab', "New Terminal"));
 		const addIcon = append(addButton, $('span.swarm-terminal-view-addTabIcon'));
 		addIcon.classList.add(...ThemeIcon.asClassNameArray(Codicon.add));
 		this._renderStore.add(addDisposableListener(addButton, 'click', () => void this._createTab()));
+
+		const maximizeButton = append(this._tabStrip, $('button.swarm-terminal-view-maximize')) as HTMLButtonElement;
+		maximizeButton.type = 'button';
+		maximizeButton.setAttribute('aria-label', localize('swarm.terminalView.maximize', "Maximize Terminal"));
+		const maximizeIcon = append(maximizeButton, $('span.swarm-terminal-view-maximizeIcon'));
+		maximizeIcon.classList.add(...ThemeIcon.asClassNameArray(Codicon.screenFull));
+		this._renderStore.add(addDisposableListener(maximizeButton, 'click', () => this._onDidRequestMaximize.fire({ tabId: this._activeTabId })));
 	}
 }
